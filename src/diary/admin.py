@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from diary.models import Entry, UsageLog
+from src.diary.models import Entry, UsageLog
 
 
 @admin.register(Entry)

@@ -1,6 +1,6 @@
 import pytest
 
-from diary.services import derive_route, select_prior_entries
+from src.diary.services import derive_route, select_prior_entries
 
 pytestmark = pytest.mark.unit
 

@@ -7,7 +7,7 @@ from decouple import config
 
 logger = logging.getLogger(__name__)
 
-JEV_API_URL = "https://jevtypesafeai.com/api/v1/decide"
+JEV_API_URL = "https://api.typesafe.ai/v1/systemone"
 
 QUESTIONS = {
     "intent": {
@@ -52,7 +52,11 @@ def decide(state):
     api_key = config("JEV_API_KEY", default="")
     if not api_key:
         raise JevError("JEV_API_KEY is not set")
-    body = json.dumps({"state": state, "questions": QUESTIONS}).encode("utf-8")
+    body = json.dumps({
+        "model": config("JEV_MODEL", default="jev-latest"),
+        "state": state,
+        "questions": QUESTIONS,
+    }).encode("utf-8")
     req = Request(
         config("JEV_API_URL", default=JEV_API_URL),
         data=body,

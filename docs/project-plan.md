@@ -1,5 +1,9 @@
 # Project plan
 
+- [x] Phase one — input and classify
+- [ ] Phase two — summary
+- [ ] Phase three — some of the backlog
+
 ## Phase one — input and classify
 
 A Google-authenticated user records or types an entry. Voice keeps the current input behavior: swipe between voice and text, pause and resume, microphone interruption, one merged recording, IndexedDB recovery, and automatic restart at `RECORDER_MAX_DURATION` (default 240 seconds). Audio is trimmed, silence is removed, and OpenAI transcribes it in the original language. Durations stored are the original length and the length after silence removal, in seconds. File sizes are not stored.

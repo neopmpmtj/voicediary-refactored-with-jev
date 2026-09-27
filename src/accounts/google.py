@@ -5,6 +5,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+from django.conf import settings
 from decouple import config
 
 logger = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ class GoogleAuthError(Exception):
 
 
 def redirect_uri():
-    return config("GOOGLE_OAUTH_REDIRECT_URI")
+    return getattr(settings, "GOOGLE_OAUTH_REDIRECT_URI", "") or config("GOOGLE_OAUTH_REDIRECT_URI")
 
 
 def create_authorization_url(scopes=None, login_hint=None):

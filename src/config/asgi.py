@@ -9,8 +9,12 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/asgi/
 
 import os
 
+from decouple import config
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+os.environ.setdefault(
+    "DJANGO_SETTINGS_MODULE",
+    config("DJANGO_SETTINGS_MODULE", default="src.config.settings.dev"),
+)
 
 application = get_asgi_application()

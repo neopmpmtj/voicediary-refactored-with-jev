@@ -1,6 +1,6 @@
 from django.urls import path
 
-from diary import views
+from src.diary import views
 
 app_name = "diary"
 

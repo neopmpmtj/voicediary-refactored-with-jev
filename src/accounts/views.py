@@ -8,7 +8,7 @@ from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.views import View
 
-from accounts.google import (
+from src.accounts.google import (
     FULL_SCOPES,
     SERVICE_SCOPES,
     GoogleAuthError,
@@ -16,8 +16,8 @@ from accounts.google import (
     exchange_code_for_tokens,
     get_google_user_info,
 )
-from accounts.models import User, UserSecret
-from accounts.services import create_google_user, revoke_user_tokens, store_user_tokens
+from src.accounts.models import User, UserSecret
+from src.accounts.services import create_google_user, revoke_user_tokens, store_user_tokens
 
 logger = logging.getLogger(__name__)
 

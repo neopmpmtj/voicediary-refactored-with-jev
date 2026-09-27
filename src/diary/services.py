@@ -7,10 +7,10 @@ from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from decouple import config
 
-from diary.audio import probe_duration_seconds, strip_silence
-from diary.jev import JevError, decide
-from diary.models import Entry, ItemType, UsageLog
-from diary.transcription import TranscriptionError, transcribe_audio
+from src.diary.audio import probe_duration_seconds, strip_silence
+from src.diary.jev import JevError, decide
+from src.diary.models import Entry, ItemType, UsageLog
+from src.diary.transcription import TranscriptionError, transcribe_audio
 
 logger = logging.getLogger(__name__)
 
