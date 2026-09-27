@@ -96,48 +96,63 @@
       recorder.pauseRecording();
     }
   });
-  stopBtn.addEventListener("click", function () {
-    recorder.stopRecording(picker.files()).then(function () {
+  function saveStandaloneFiles() {
+    var files = picker.files();
+    if (!files.length) {
+      return Promise.resolve();
+    }
+    var formData = new FormData();
+    files.forEach(function (file) {
+      formData.append("files", file);
+    });
+    if (saveFilesBtn) {
+      saveFilesBtn.disabled = true;
+    }
+    return fetch(config.filesUploadUrl, {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-CSRFToken": recorder.getCsrfToken(),
+        "Accept": "application/json",
+      },
+    }).then(function (response) {
+      return response.json().then(function (data) {
+        if (!response.ok) {
+          throw new Error(data.message || data.error || "Upload failed");
+        }
+        return data;
+      });
+    }).then(function (data) {
+      result.hidden = false;
+      result.textContent = (data.content_text || "Files saved") + "\n" + (data.attachment_count || files.length) + " file(s).";
+      status.textContent = "Saved";
       picker.clear();
+    }).catch(function (error) {
+      status.textContent = error.message || "Could not save files";
+      throw error;
+    }).finally(function () {
+      if (saveFilesBtn) {
+        saveFilesBtn.disabled = picker.files().length === 0;
+      }
+    });
+  }
+
+  stopBtn.addEventListener("click", function () {
+    recorder.stopRecording(picker.files()).then(function (outcome) {
+      if (outcome && outcome.uploaded) {
+        picker.clear();
+        return;
+      }
+      if (picker.files().length) {
+        return saveStandaloneFiles();
+      }
     }).catch(function (error) {
       status.textContent = error.message || "Could not stop";
     });
   });
   if (saveFilesBtn) {
     saveFilesBtn.addEventListener("click", function () {
-      var files = picker.files();
-      if (!files.length) {
-        return;
-      }
-      var formData = new FormData();
-      files.forEach(function (file) {
-        formData.append("files", file);
-      });
-      saveFilesBtn.disabled = true;
-      fetch(config.filesUploadUrl, {
-        method: "POST",
-        body: formData,
-        headers: {
-          "X-CSRFToken": recorder.getCsrfToken(),
-          "Accept": "application/json",
-        },
-      }).then(function (response) {
-        return response.json().then(function (data) {
-          if (!response.ok) {
-            throw new Error(data.message || data.error || "Upload failed");
-          }
-          return data;
-        });
-      }).then(function (data) {
-        result.hidden = false;
-        result.textContent = (data.content_text || "Files saved") + "\n" + (data.attachment_count || files.length) + " file(s).";
-        status.textContent = "Saved";
-        picker.clear();
-      }).catch(function (error) {
-        status.textContent = error.message || "Could not save files";
-      }).finally(function () {
-        saveFilesBtn.disabled = picker.files().length === 0;
-      });
+      saveStandaloneFiles().catch(function () {});
     });
   }
 

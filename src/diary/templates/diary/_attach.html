@@ -1,6 +1,7 @@
 <div class="attach">
-  <input type="file" id="{{ input_id|default:'attachInput' }}" name="files" multiple class="attach-input">
-  <label for="{{ input_id|default:'attachInput' }}" id="{{ button_id|default:'attachBtn' }}" class="button attach-btn">Attach files</label>
+  {% csrf_token %}
+  <input type="file" id="{{ input_id|default:'attachInput' }}" name="files" multiple class="attach-input" tabindex="-1" aria-hidden="true">
+  <button type="button" id="{{ button_id|default:'attachBtn' }}" class="button attach-btn">Attach files</button>
   <span id="{{ badge_id|default:'attachBadge' }}" class="attach-badge" hidden>0</span>
   <ul id="{{ list_id|default:'attachList' }}" class="attach-list"></ul>
 </div>
