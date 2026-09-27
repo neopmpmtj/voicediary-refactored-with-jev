@@ -50,7 +50,7 @@ label.button {
   list-style: none;
   padding: 0;
 }
-.entries li {
+.entries > li {
   background: #fff;
   border: 1px solid #d9d3c7;
   padding: 0.75rem 1rem;

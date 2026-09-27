@@ -1,5 +1,6 @@
 import logging
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -97,6 +98,7 @@ def upload_files(request):
     if not files:
         if _wants_json(request):
             return JsonResponse({"error": "missing_files", "message": "No files uploaded."}, status=400)
+        messages.error(request, "Choose at least one file.")
         return redirect("diary:list")
     entry_id = request.POST.get("entry_id")
     try:
@@ -108,9 +110,14 @@ def upload_files(request):
     except AttachmentError as exc:
         if _wants_json(request):
             return JsonResponse({"error": "missing_files", "message": str(exc)}, status=400)
+        messages.error(request, str(exc))
         return redirect("diary:list")
     if _wants_json(request):
         return JsonResponse(entry_payload(entry))
+    if entry_id:
+        messages.success(request, "Files added to the entry.")
+    else:
+        messages.success(request, "Files saved.")
     return redirect("diary:list")
 
 

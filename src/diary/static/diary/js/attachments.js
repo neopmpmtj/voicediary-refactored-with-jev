@@ -31,8 +31,9 @@
       }
     }
 
-    if (button && input && button.tagName === "BUTTON") {
-      button.addEventListener("click", function () {
+    if (button && input) {
+      button.addEventListener("click", function (event) {
+        event.preventDefault();
         input.click();
       });
     }

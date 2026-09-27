@@ -816,7 +816,7 @@ class VoiceDiaryRecorder {
                 if (this.audioBlob && (!this.mediaRecorder || this.mediaRecorder.state === 'inactive')) {
                     this.stopStream();
                     await this.upload(files, { durationSeconds });
-                    return;
+                    return { uploaded: true };
                 }
                 throw new Error(`Cannot stop in state: ${this.state}`);
             }
@@ -843,7 +843,7 @@ class VoiceDiaryRecorder {
             if (parts.length === 0) {
                 this.stopStream();
                 this.setState('idle');
-                return;
+                return { uploaded: false, reason: 'no_audio' };
             }
 
             if (parts.length === 1) {
@@ -851,7 +851,7 @@ class VoiceDiaryRecorder {
                 this.audioBlob = parts[0].blob;
                 this.stopStream();
                 await this.upload(files, { durationSeconds: parts[0].durationSeconds });
-                return;
+                return { uploaded: true };
             }
 
             // Multi-part take (interrupted + resumed): merge into ONE single recording.
@@ -869,7 +869,7 @@ class VoiceDiaryRecorder {
                 this.stopStream();
                 await this.upload(files, { durationSeconds: totalDuration });
                 await this._clearHeldPartsBackup();
-                return;
+                return { uploaded: true };
             }
 
             // Fallback: upload each part so nothing is lost.
@@ -883,6 +883,7 @@ class VoiceDiaryRecorder {
             this.audioBlob = parts[parts.length - 1].blob;
             await this.upload(files, { durationSeconds: parts[parts.length - 1].durationSeconds });
             await this._clearHeldPartsBackup();
+            return { uploaded: true };
         }).finally(() => {
             this.stopDurationTracking();
         });

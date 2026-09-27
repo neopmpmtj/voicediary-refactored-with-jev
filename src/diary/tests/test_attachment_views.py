@@ -42,8 +42,14 @@ def _classify_ok(_state):
 def test_input_pages_include_file_controls(auth_client):
     voice = auth_client.get("/voice/")
     assert voice.status_code == 200
-    assert b"Attach files" in voice.content
-    assert b"Save files" in voice.content
+    html = voice.content.decode()
+    assert "Attach files" in html
+    assert "Save files" in html
+    assert 'id="attachBtn"' in html
+    assert "<button" in html
+    assert 'type="button"' in html
+    assert "csrfmiddlewaretoken" in html
+    assert 'name="csrf-token"' in html
     text = auth_client.get("/text-input/")
     assert text.status_code == 200
     assert b'name="files"' in text.content
@@ -107,9 +113,42 @@ def test_add_files_to_existing_entry(auth_client, user, settings, tmp_path):
     response = auth_client.post(
         "/files/upload/",
         {"entry_id": str(entry.id), "files": _pdf("extra.pdf")},
+        follow=True,
     )
-    assert response.status_code == 302
+    assert response.status_code == 200
     assert entry.attachments.get().original_filename == "extra.pdf"
+    assert b"Files added to the entry." in response.content
+    assert b"extra.pdf" in response.content
+    assert b"Add more files" in response.content
+    assert b'required' in response.content
+
+
+def test_add_files_without_choosing_a_file_shows_an_error(auth_client, user):
+    with patch("src.diary.services.decide", side_effect=_classify_ok):
+        from src.diary.services import ingest_text
+        entry = ingest_text(user, "Existing")
+    response = auth_client.post(
+        "/files/upload/",
+        {"entry_id": str(entry.id)},
+        follow=True,
+    )
+    assert response.status_code == 200
+    assert entry.attachments.count() == 0
+    assert b"Choose at least one file." in response.content
+
+
+def test_standalone_form_upload_shows_saved_message(auth_client, settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+    response = auth_client.post(
+        "/files/upload/",
+        {"files": _pdf("form.pdf")},
+        follow=True,
+    )
+    assert response.status_code == 200
+    assert b"Files saved." in response.content
+    assert b"form.pdf" in response.content
+    entry = Entry.objects.get()
+    assert entry.item_type == ItemType.FILE
 
 
 @patch("src.diary.services.transcribe_audio", return_value={"text": "hello", "duration": 1, "model": "x"})
