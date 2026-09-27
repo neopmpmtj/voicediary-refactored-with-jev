@@ -16,13 +16,15 @@ Do not commit secrets. Sample env and credential files stay reference-only.
 - Local file attachments: timestamped uploads under `media/attachments/`, processed audio under `media/artifacts/`. Linked to the voice/text entry when sent with it; standalone files become their own input.
 - Voice-page attach + entries Add-files bugs fixed (PR #4): button opens the picker, empty Stop saves queued files, entries form shows success/error.
 - Conferencing app at `/conference/`: one conversation, 240-second segments plus a short final segment, transcripts joined in order. No diary classification.
+- Visual shell matches the old Voice Diary chrome (Tailwind, dark, red record button, pulse). `docs/ui-rules.md`. Strings wrapped in `{% trans %}`.
 
 **Not done**
 
+- Interface language (`pt-pt` default, `en`). Interface language is not the backlog item Translation.
 - Conference question set and the single classification call after stop.
 - Diary prior context still waits for two older rows. File-only uploads can still be sent as prior text. Both changes are decided and not built. Unknown audio duration stays out of prior context.
 - Phase two summary (conditions undefined). Phase-three backlog. Service-worker 404 left paused.
 
 **Next**
 
-- Define conference classification questions, then classify the joined transcript after stop.
+- Interface language. Conference classification can proceed beside that.

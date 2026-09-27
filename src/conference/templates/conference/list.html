@@ -1,27 +1,33 @@
-{% extends "base.html" %}
-{% block title %}Conferences{% endblock %}
-{% block content %}
-<main class="sheet">
-  <header class="bar">
-    <a href="{% url 'conference:record' %}">Record</a>
-    <a href="{% url 'diary:voice' %}">Diary</a>
-    <a href="{% url 'accounts:logout' %}">Sign out</a>
-  </header>
-  <h1>Conferences</h1>
+{% extends "base_dashboard.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Conferences" %} - VoiceDiary{% endblock %}
+{% block page_title %}{% trans "Conferences" %}{% endblock %}
+
+{% block dashboard_top_right %}
+<a href="{% url 'conference:record' %}" class="vd-btn vd-btn-accent px-3 py-1.5 text-sm">{% trans "Record" %}</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="space-y-4 animate-fade-in">
   {% if not conferences %}
-  <p>No conferences yet.</p>
+  <div class="text-center py-12">
+    <h3 class="text-base font-semibold text-foreground mb-1">{% trans "No conferences yet" %}</h3>
+    <p class="text-sm text-muted-foreground mb-4">{% trans "Start a conversation to keep a long recording in one place." %}</p>
+    <a href="{% url 'conference:record' %}" class="vd-btn vd-btn-accent px-4 py-2 text-sm">{% trans "Record Now" %}</a>
+  </div>
   {% endif %}
-  <ul class="entries">
+  <ul class="space-y-3">
     {% for conference in conferences %}
-    <li>
-      <p>{{ conference.content_text|default:"No transcript yet." }}</p>
-      <p class="meta">{{ conference.started_at }} · {{ conference.status }} · {{ conference.total_duration_seconds|default:"0" }}s · {{ conference.segments.all|length }} segment{{ conference.segments.all|length|pluralize }}</p>
+    <li class="vd-card p-4 space-y-3">
+      <p class="text-sm text-foreground whitespace-pre-wrap">{{ conference.content_text|default:"No transcript yet." }}</p>
+      <p class="text-xs text-muted-foreground">{{ conference.started_at }} · {{ conference.status }} · {{ conference.total_duration_seconds|default:"0" }}s · {{ conference.segments.all|length }} segment{{ conference.segments.all|length|pluralize }}</p>
       {% if conference.segments.all %}
-      <ul class="attach-list">
+      <ul class="space-y-1 text-sm text-muted-foreground">
         {% for segment in conference.segments.all %}
         <li>
           <span>#{{ segment.sequence }}</span>
-          <span class="meta">{{ segment.recording_duration_seconds|default:"?" }}s</span>
+          <span>{{ segment.recording_duration_seconds|default:"?" }}s</span>
           <span>{{ segment.content_text|default:segment.transcription_error }}</span>
         </li>
         {% endfor %}
@@ -30,5 +36,5 @@
     </li>
     {% endfor %}
   </ul>
-</main>
+</div>
 {% endblock %}

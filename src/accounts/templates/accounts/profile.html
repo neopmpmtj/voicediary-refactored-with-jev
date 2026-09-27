@@ -1,21 +1,36 @@
-{% extends "base.html" %}
-{% block title %}Profile{% endblock %}
-{% block content %}
-<main class="sheet">
-  <h1>{{ user.email }}</h1>
-  <p>{% if connected %}Google is connected.{% else %}Google services are not connected.{% endif %}</p>
-  {% if scopes %}
-  <ul>
-    {% for scope in scopes %}
-    <li>{{ scope }}</li>
-    {% endfor %}
-  </ul>
-  {% endif %}
-  <p><a href="{% url 'accounts:google_connect' %}">Connect Google services</a></p>
-  <form method="post" action="{% url 'accounts:google_disconnect' %}">
-    {% csrf_token %}
-    <button type="submit">Disconnect Google</button>
-  </form>
-  <p><a href="{% url 'diary:voice' %}">Back to recording</a></p>
-</main>
+{% extends "base_dashboard.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Profile" %} - VoiceDiary{% endblock %}
+{% block page_title %}{% trans "Profile" %}{% endblock %}
+
+{% block dashboard_content %}
+<div class="space-y-6 animate-fade-in">
+  <section>
+    <h2 class="text-sm font-semibold text-muted-foreground mb-3">{% trans "Account" %}</h2>
+    <div class="vd-card p-6 space-y-4">
+      <p class="text-sm font-medium text-foreground">{{ user.email }}</p>
+      <p class="text-sm text-muted-foreground">
+        {% if connected %}{% trans "Google is connected." %}{% else %}{% trans "Google services are not connected." %}{% endif %}
+      </p>
+      {% if scopes %}
+      <ul class="text-xs text-muted-foreground space-y-1">
+        {% for scope in scopes %}
+        <li>{{ scope }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <a href="{% url 'accounts:google_connect' %}" class="vd-btn vd-btn-accent px-4 py-2 text-sm">{% trans "Connect Google services" %}</a>
+      <form method="post" action="{% url 'accounts:google_disconnect' %}">
+        {% csrf_token %}
+        <button type="submit" class="vd-btn vd-btn-ghost px-4 py-2 text-sm border border-input">{% trans "Disconnect Google" %}</button>
+      </form>
+    </div>
+  </section>
+  <section>
+    <a href="{% url 'accounts:logout' %}" class="vd-btn vd-btn-ghost w-full py-2.5 text-sm text-muted-foreground hover:text-destructive">
+      {% trans "Sign Out" %}
+    </a>
+  </section>
+</div>
 {% endblock %}

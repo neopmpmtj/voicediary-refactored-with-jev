@@ -1,7 +1,13 @@
-<div class="attach">
-  {% csrf_token %}
-  <input type="file" id="{{ input_id|default:'attachInput' }}" name="files" multiple class="attach-input" tabindex="-1" aria-hidden="true">
-  <button type="button" id="{{ button_id|default:'attachBtn' }}" class="button attach-btn">Attach files</button>
-  <span id="{{ badge_id|default:'attachBadge' }}" class="attach-badge" hidden>0</span>
-  <ul id="{{ list_id|default:'attachList' }}" class="attach-list"></ul>
-</div>
+{% load i18n %}
+<input type="file" id="{{ input_id|default:'attachInput' }}" name="files" multiple class="sr-only" tabindex="-1" aria-hidden="true">
+<button type="button" id="{{ button_id|default:'attachBtn' }}"
+        class="vd-btn vd-btn-ghost p-2 relative"
+        aria-label="{% trans 'Attach files' %}">
+  <svg class="h-6 w-6 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round"
+          d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+  </svg>
+  <span id="{{ badge_id|default:'attachBadge' }}"
+        class="hidden absolute -top-1 -right-1 h-4 w-4 rounded-full bg-accent text-accent-foreground
+               text-[13px] font-bold items-center justify-center">0</span>
+</button>

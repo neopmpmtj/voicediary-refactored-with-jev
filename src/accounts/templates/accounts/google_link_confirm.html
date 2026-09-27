@@ -1,13 +1,18 @@
-{% extends "base.html" %}
-{% block title %}Link Google{% endblock %}
-{% block content %}
-<main class="sheet">
-  <h1>Link Google</h1>
-  <p>Enter the password for {{ email }} to link this Google account.</p>
-  <form method="post">
-    {% csrf_token %}
-    <label>Password <input type="password" name="password" required></label>
-    <button type="submit">Link account</button>
-  </form>
-</main>
+{% extends "base_auth.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Link Google" %} - VoiceDiary{% endblock %}
+{% block auth_title %}{% trans "Link Google" %}{% endblock %}
+{% block auth_subtitle %}{% trans "Enter the password for this account to link Google." %}{% endblock %}
+
+{% block auth_content %}
+<p class="text-sm text-muted-foreground mb-4">{{ email }}</p>
+<form method="post" class="space-y-4">
+  {% csrf_token %}
+  <div class="space-y-1.5">
+    <label for="id_password" class="block text-sm font-medium text-foreground">{% trans "Password" %}</label>
+    <input type="password" id="id_password" name="password" required class="vd-input">
+  </div>
+  <button type="submit" class="vd-btn vd-btn-accent w-full py-2.5 text-sm">{% trans "Link account" %}</button>
+</form>
 {% endblock %}

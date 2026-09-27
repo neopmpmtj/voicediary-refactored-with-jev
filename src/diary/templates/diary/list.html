@@ -1,51 +1,62 @@
-{% extends "base.html" %}
-{% block title %}Entries{% endblock %}
-{% block content %}
-<main class="sheet">
-  <header class="bar">
-    <a href="{% url 'diary:voice' %}">Record</a>
-    <a href="{% url 'accounts:profile' %}">Profile</a>
-    <a href="{% url 'accounts:logout' %}">Sign out</a>
-  </header>
-  <h1>Entries</h1>
+{% extends "base_dashboard.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "My Entries" %} - VoiceDiary{% endblock %}
+{% block page_title %}{% trans "My Entries" %}{% endblock %}
+
+{% block dashboard_top_right %}
+<a href="{% url 'accounts:profile' %}"
+   class="vd-btn vd-btn-ghost px-2 py-1.5 text-sm gap-1.5">
+  {% trans "Profile" %}
+</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="space-y-4 animate-fade-in">
   {% if not entries %}
-  <p>No entries yet.</p>
+  <div class="text-center py-12">
+    <h3 class="text-base font-semibold text-foreground mb-1">{% trans "No entries yet." %}</h3>
+    <p class="text-sm text-muted-foreground mb-4">{% trans "Record your first voice entry to get started." %}</p>
+    <a href="{% url 'diary:voice' %}" class="vd-btn vd-btn-accent px-4 py-2 text-sm">{% trans "Record Now" %}</a>
+  </div>
   {% endif %}
-  <ul class="entries">
+
+  <ul class="space-y-3">
     {% for entry in entries %}
-    <li>
-      <p>{{ entry.content_text }}</p>
-      <p class="meta">{{ entry.created_at }} · {{ entry.item_type }} · {{ entry.route|default:"unclassified" }} · {{ entry.intent }} · {{ entry.subject }}</p>
+    <li class="vd-card p-4 space-y-3">
+      <p class="text-sm text-foreground whitespace-pre-wrap">{{ entry.content_text }}</p>
+      <p class="text-xs text-muted-foreground">{{ entry.created_at }} · {{ entry.item_type }} · {{ entry.route|default:"unclassified" }} · {{ entry.intent }} · {{ entry.subject }}</p>
       {% if entry.attachments.all %}
-      <ul class="attach-list">
+      <ul class="space-y-1 text-sm">
         {% for file in entry.attachments.all %}
-        <li>
-          <a href="{% url 'diary:download' file.id %}">{{ file.original_filename }}</a>
-          <span class="meta">{{ file.uploaded_at }}</span>
+        <li class="flex items-center justify-between gap-2">
+          <a href="{% url 'diary:download' file.id %}" class="text-accent hover:underline truncate">{{ file.original_filename }}</a>
+          <span class="text-xs text-muted-foreground shrink-0">{{ file.uploaded_at }}</span>
         </li>
         {% endfor %}
       </ul>
       {% else %}
-      <p class="meta">No files attached yet.</p>
+      <p class="text-xs text-muted-foreground">{% trans "No files attached yet." %}</p>
       {% endif %}
-      <form method="post" action="{% url 'diary:upload_files' %}" enctype="multipart/form-data" class="attach-later">
+      <form method="post" action="{% url 'diary:upload_files' %}" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
         {% csrf_token %}
         <input type="hidden" name="entry_id" value="{{ entry.id }}">
-        <label class="meta" for="files-{{ entry.id }}">Add more files</label>
-        <input id="files-{{ entry.id }}" type="file" name="files" multiple required>
-        <button type="submit">Add files</button>
+        <label class="text-xs text-muted-foreground" for="files-{{ entry.id }}">{% trans "Add more files" %}</label>
+        <input id="files-{{ entry.id }}" type="file" name="files" multiple required class="text-sm text-muted-foreground">
+        <button type="submit" class="vd-btn vd-btn-ghost px-3 py-1.5 text-xs border border-input">{% trans "Add files" %}</button>
       </form>
     </li>
     {% endfor %}
   </ul>
-  <section class="standalone">
-    <h2>Upload files</h2>
-    <p class="meta">Files saved here become their own entry when they are not attached to voice or text.</p>
-    <form method="post" action="{% url 'diary:upload_files' %}" enctype="multipart/form-data">
+
+  <section class="vd-card p-4 space-y-3">
+    <h2 class="text-sm font-semibold text-foreground">{% trans "Upload files" %}</h2>
+    <p class="text-xs text-muted-foreground">{% trans "Files saved here become their own entry when they are not attached to voice or text." %}</p>
+    <form method="post" action="{% url 'diary:upload_files' %}" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
       {% csrf_token %}
-      <input type="file" name="files" multiple required>
-      <button type="submit">Save files</button>
+      <input type="file" name="files" multiple required class="text-sm text-muted-foreground">
+      <button type="submit" class="vd-btn vd-btn-accent px-4 py-2 text-sm">{% trans "Save files" %}</button>
     </form>
   </section>
-</main>
+</div>
 {% endblock %}

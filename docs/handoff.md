@@ -1,4 +1,4 @@
-> **Last updated:** 2026-09-27 16:40 WEST (Europe/Lisbon)
+> **Last updated:** 2026-09-27 17:25 WEST (Europe/Lisbon)
 > Replace with the current date and time whenever you edit this file.
 
 # Session handoff
@@ -12,10 +12,12 @@
 - Conferencing is a separate app. The user opens `/conference/`. One conference row holds the conversation. Each upload is a segment under `media/conferences/<user>/<conference>/`. A full segment is at most 240 seconds and does not close the conference. The last segment, of any shorter length, closes it. Segment transcripts are joined in sequence order. Diary JEV is not called. Classification questions for a finished conference are not defined yet.
 - Diary voice links to Conference. Held-part crash backups from a conference are not recovered as diary entries.
 - Pytest: 31 passed. Django check is clean.
+- Visual shell matches the old Voice Diary chrome on the screens that exist: near-black, Inter, green accent, red 72px record button that starts/pauses/resumes, Stop while live. Tailwind via `django-tailwind-cli`. User-facing strings wrapped in `{% trans %}`. Cream CSS is gone.
 
 ## Not done
 
-- Conference classification (own question set, after stop). Not the diary taxonomy, and not a length label.
+- Interface language after the shell: `pt-pt` default, `en` available. Separate from diary-content translation.
+- Conference classification (own question set, after stop). Not the diary taxonomy, and not a length label. It does not wait on the visual shell.
 - Diary prior-context rules discussed earlier are not changed: priors still wait until two older rows exist, and file-only rows can still appear as prior text.
 - Summary (phase two). Conditions for when to summarize are not defined.
 - Phase-three backlog: translation, retrieval/chat, GIGO, quotas, Stripe, verifier, list/todo/finance/calendar records, venue/day/time, extra taxonomy dimensions, Celery/Redis/WebSockets, Gmail/Drive/Calendar API calls.
@@ -25,7 +27,7 @@
 
 ## Next
 
-Define the conference question set, then classify the joined transcript once after stop.
+Interface language (`pt-pt` default, `en`). Conference classification can proceed beside that.
 
 ## Commands
 
@@ -37,6 +39,7 @@ DJANGO_SETTINGS_MODULE=src.config.settings.dev
 # checks
 .venv/bin/python manage.py check
 .venv/bin/pytest -q
+.venv/bin/python manage.py tailwind build
 
 # production
 DJANGO_SETTINGS_MODULE=src.config.settings.prod

@@ -1,21 +1,28 @@
-{% load static %}
+{% load static i18n tailwind_cli %}
+{% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE|default:'en' }}" class="dark theme-green">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token }}">
-  <title>{% block title %}Voice Diary{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'diary/diary.css' %}">
+  <title>{% block title %}VoiceDiary{% endblock %}</title>
+  {% tailwind_css %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  {% block extra_head %}{% endblock %}
 </head>
-<body>
-  {% if messages %}
-  <ul class="messages">
-    {% for message in messages %}
-    <li>{{ message }}</li>
-    {% endfor %}
-  </ul>
+<body class="min-h-screen bg-background text-foreground font-sans antialiased flex flex-col">
+  {% block top_bar %}{% endblock %}
+  <main class="flex-1 flex flex-col">
+    {% block content %}{% endblock %}
+  </main>
+  {% include "components/_toast.html" %}
+  <script src="{% static 'diary/js/ui.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+  {% if request.user.is_authenticated %}
+  {% csrf_token %}
   {% endif %}
-  {% block content %}{% endblock %}
 </body>
 </html>

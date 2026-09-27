@@ -3,6 +3,8 @@
 - [x] Phase one — input and classify
 - [x] File attachments (local, timestamped, optional link to an input)
 - [ ] Conferencing
+- [x] Visual shell
+- [ ] Interface language
 - [ ] Phase two — summary
 - [ ] Phase three — some of the backlog
 
@@ -55,6 +57,30 @@ Build order:
 
 `recording_group_id` on a diary entry is not the conference model.
 
+Conference classification does not wait on the visual shell. New screens are not designed in the temporary cream layout. They follow [docs/ui-rules.md](ui-rules.md).
+
+## Visual shell
+
+Applied [docs/ui-rules.md](ui-rules.md) to the screens that exist: sign-in, voice, text, entries, conference record, conference list, profile, and Google link-confirm.
+
+The shell is a replica of the old Voice Diary chrome, with fewer screens. Tailwind via `django-tailwind-cli` is required so the old layout, spacing, and `vd-` components match. JavaScript stays plain. No React.
+
+Near-black background, Inter, green accent for cards and dots, a centered column of about 42rem, and the red 72px record button. One button starts, pauses, and resumes. The `recording` class pulses. Paused is a darker red and does not pulse. Stop appears while the take is live.
+
+Recorder behavior in `src/diary/static/diary/js/voice_page.js` and `src/conference/static/conference/js/conference_page.js` stays except for that control pattern.
+
+While this shell is built, wrap every user-facing string in `{% trans %}`. The Portuguese catalog is the next phase, not this one.
+
+## Interface language
+
+Immediately after the visual shell, and before any new pages, so later screens are born bilingual.
+
+English and Portuguese (`en` and `pt-pt`). The default is `pt-pt`, matching the app this repo replaces. English strings in code are the message ids. Portuguese is the catalog.
+
+`LocaleMiddleware`, `LOCALE_PATHS`, a user language preference, and a language control. This is the interface chrome: buttons, errors, and empty states.
+
+This is not the backlog item Translation. That item translates diary content.
+
 ## Phase two — summary
 
 After a phase-one entry is stored and classified. Run only when conditions are met. Those conditions are not defined yet. The summarizer reports input and output tokens, written to the same usage log.
@@ -65,7 +91,7 @@ Phase three takes some of the items below, not all of them. Which ones is decide
 
 ### Backlog
 
-- Translation
+- Translation (diary content, not the interface language)
 - Retrieval and chat
 - GIGO
 - Quotas

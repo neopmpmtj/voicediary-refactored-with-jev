@@ -1,23 +1,38 @@
-{% extends "base.html" %}
-{% load static %}
-{% block title %}Text{% endblock %}
-{% block content %}
-<main class="sheet" data-swipe-content>
-  <header class="bar">
-    <a href="{% url 'diary:list' %}">Entries</a>
-    <span class="dots"><a href="{% url 'diary:voice' %}">Voice</a> <strong>Text</strong></span>
-    <a href="{% url 'accounts:logout' %}">Sign out</a>
-  </header>
-  {% if error %}<p class="status">{{ error }}</p>{% endif %}
-  <form method="post" enctype="multipart/form-data" id="textForm">
+{% extends "base_input.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Text Input" %} - VoiceDiary{% endblock %}
+{% block dot_text %}bg-accent{% endblock %}
+
+{% block input_content %}
+<div data-swipe-content class="relative flex-1 flex flex-col gap-4">
+  {% if error %}
+  <div class="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+    <p class="text-sm font-medium text-destructive mb-1">{% trans "Error" %}</p>
+    <p class="text-sm text-foreground">{{ error }}</p>
+  </div>
+  {% endif %}
+  <form method="post" enctype="multipart/form-data" id="textForm" class="flex-1 flex flex-col gap-4">
     {% csrf_token %}
-    <label for="text">Entry</label>
-    <textarea id="text" name="text" rows="8">{{ text|default:"" }}</textarea>
-    <label for="textFiles">Files</label>
-    <input id="textFiles" type="file" name="files" multiple>
-    <button type="submit">Save</button>
+    <label for="text" class="sr-only">{% trans "Entry" %}</label>
+    <textarea id="text" name="text" rows="8"
+              class="vd-textarea flex-1 text-base leading-relaxed resize-none min-h-[200px]"
+              placeholder="{% trans 'Type your note here...' %}"
+              autofocus>{{ text|default:"" }}</textarea>
+    <div class="flex flex-wrap items-center justify-between gap-3 py-2 w-full">
+      <label class="vd-btn vd-btn-ghost px-3 py-1.5 text-sm border border-input gap-1.5 cursor-pointer">
+        {% trans "Attach files" %}
+        <input id="textFiles" type="file" name="files" multiple class="sr-only">
+      </label>
+      <button type="submit" class="vd-btn vd-btn-accent px-6 py-2.5 text-sm">
+        {% trans "Save" %}
+      </button>
+    </div>
   </form>
-</main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script>
   document.body.setAttribute("data-swipe-current", "text");
   document.body.setAttribute("data-swipe-voice-url", "{% url 'diary:voice' %}");

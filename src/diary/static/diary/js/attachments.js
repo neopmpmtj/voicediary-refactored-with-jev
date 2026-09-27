@@ -12,22 +12,37 @@
         list.innerHTML = "";
         files.forEach(function (file, index) {
           var item = document.createElement("li");
-          item.textContent = file.name;
+          item.className = "flex items-center justify-between gap-2 text-sm";
+          var name = document.createElement("span");
+          name.className = "truncate";
+          name.textContent = file.name;
           var remove = document.createElement("button");
           remove.type = "button";
+          remove.className = "text-destructive hover:text-destructive/80 text-xs shrink-0";
+          remove.setAttribute("aria-label", "Remove");
           remove.textContent = "Remove";
           remove.addEventListener("click", function () {
             files.splice(index, 1);
             render();
             onChange(files.slice());
           });
+          item.appendChild(name);
           item.appendChild(remove);
           list.appendChild(item);
         });
       }
       if (badge) {
-        badge.hidden = files.length === 0;
-        badge.textContent = String(files.length);
+        if (files.length > 0) {
+          badge.classList.remove("hidden");
+          badge.classList.add("flex");
+          badge.hidden = false;
+          badge.textContent = String(files.length);
+        } else {
+          badge.classList.add("hidden");
+          badge.classList.remove("flex");
+          badge.hidden = true;
+          badge.textContent = "0";
+        }
       }
     }
 

@@ -154,6 +154,12 @@ Thumbs.db
 *.pem
 *.key
 
+# Django collected static
+staticfiles/
+
+# Tailwind CLI download cache
+.django_tailwind_cli/
+
 # Media and local artifacts
 logs/
 audio/

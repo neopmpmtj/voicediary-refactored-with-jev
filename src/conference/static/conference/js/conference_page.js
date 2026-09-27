@@ -2,23 +2,25 @@
   var config = JSON.parse(document.getElementById("recorder-config").textContent);
   var timer = document.getElementById("timer");
   var status = document.getElementById("status");
-  var toast = document.getElementById("toast");
   var result = document.getElementById("result");
+  var placeholder = document.getElementById("resultPlaceholder");
   var recordBtn = document.getElementById("recordBtn");
-  var pauseBtn = document.getElementById("pauseBtn");
   var stopBtn = document.getElementById("stopBtn");
   var session = { id: null, sequence: 1 };
-
-  function showToast(message) {
-    toast.hidden = false;
-    toast.textContent = message;
-  }
 
   function formatDuration(seconds) {
     var total = Math.floor(seconds);
     var minutes = String(Math.floor(total / 60)).padStart(2, "0");
     var secs = String(total % 60).padStart(2, "0");
     return minutes + ":" + secs;
+  }
+
+  function showResult(text) {
+    if (placeholder) {
+      placeholder.classList.add("hidden");
+    }
+    result.classList.remove("hidden");
+    result.textContent = text;
   }
 
   function postForm(url, fields) {
@@ -81,31 +83,37 @@
     timer.textContent = formatDuration(duration);
   };
   recorder.onStateChange = function (state) {
-    status.textContent = state;
-    var live = state === "recording" || state === "paused";
-    var busy = live || state === "uploading" || state === "processing";
-    recordBtn.disabled = busy;
-    pauseBtn.disabled = state !== "recording" && state !== "paused";
-    pauseBtn.textContent = state === "paused" ? "Resume" : "Pause";
-    stopBtn.disabled = !live;
+    if (status) {
+      status.textContent = state === "uploading" ? "Uploading..." : "Processing...";
+    }
+    window.VDUI.applyRecordState(state, { recordBtn: recordBtn, stopBtn: stopBtn });
   };
   recorder.onRollover = function () {
-    showToast("Segment saved. Continuing.");
+    window.VDUI.showToast("Segment saved. Continuing.");
   };
   recorder.onContentReady = function (data) {
-    result.hidden = false;
-    result.textContent = data.content_text || "";
+    var text = data.content_text || "";
     if (data.transcription_error) {
-      result.textContent += "\nTranscription failed.";
+      text += "\nTranscription failed.";
     }
-    status.textContent = data.status === "complete" ? "Saved" : status.textContent;
+    showResult(text);
     clearSession();
   };
   recorder.onError = function (error) {
-    status.textContent = error.message || "Recording failed";
+    window.VDUI.showToast(error.message || "Recording failed", "error");
   };
 
   recordBtn.addEventListener("click", function () {
+    if (recorder.state === "recording") {
+      recorder.pauseRecording();
+      return;
+    }
+    if (recorder.state === "paused") {
+      Promise.resolve(recorder.resumeRecording()).catch(function (error) {
+        window.VDUI.showToast(error.message || "Could not resume", "error");
+      });
+      return;
+    }
     recordBtn.disabled = true;
     postForm(config.startUrl, {}).then(function (data) {
       session.id = data.conference_id;
@@ -116,20 +124,11 @@
       var id = session.id;
       clearSession();
       recordBtn.disabled = false;
-      status.textContent = error.message || "Could not start conference";
+      window.VDUI.showToast(error.message || "Could not start conference", "error");
       if (id) {
         postForm(config.stopUrl, { conference_id: id }).catch(function () {});
       }
     });
-  });
-  pauseBtn.addEventListener("click", function () {
-    if (recorder.state === "paused") {
-      Promise.resolve(recorder.resumeRecording()).catch(function (error) {
-        status.textContent = error.message || "Could not resume";
-      });
-    } else {
-      recorder.pauseRecording();
-    }
   });
   stopBtn.addEventListener("click", function () {
     var id = session.id;
@@ -143,12 +142,10 @@
       if (!data) {
         return;
       }
-      result.hidden = false;
-      result.textContent = data.content_text || "";
-      status.textContent = "Saved";
+      showResult(data.content_text || "");
       clearSession();
     }).catch(function (error) {
-      status.textContent = error.message || "Could not stop";
+      window.VDUI.showToast(error.message || "Could not stop", "error");
     });
   });
 
@@ -163,11 +160,9 @@
       if (!data) {
         return;
       }
-      result.hidden = false;
-      result.textContent = data.content_text || "";
-      status.textContent = "Saved";
+      showResult(data.content_text || "");
     }).catch(function () {
-      status.textContent = "Could not recover the conference";
+      window.VDUI.showToast("Could not recover the conference", "error");
     }).finally(function () {
       clearSession();
     });
