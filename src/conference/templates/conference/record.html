@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Conference{% endblock %}
+{% block content %}
+<main class="sheet">
+  <header class="bar">
+    <a href="{% url 'conference:list' %}">Conferences</a>
+    <a href="{% url 'diary:voice' %}">Diary</a>
+    <a href="{% url 'accounts:logout' %}">Sign out</a>
+  </header>
+  <p class="meta">One conversation. Recording splits every {{ recorder_config.maxDuration }} seconds and keeps going until you stop.</p>
+  <p id="timer" class="timer">00:00</p>
+  <p id="status" class="status">Ready</p>
+  <div class="controls">
+    <button type="button" id="recordBtn">Record</button>
+    <button type="button" id="pauseBtn" disabled>Pause</button>
+    <button type="button" id="stopBtn" disabled>Stop</button>
+  </div>
+  <p id="toast" class="toast" hidden></p>
+  <pre id="result" class="result" hidden></pre>
+</main>
+{{ recorder_config|json_script:"recorder-config" }}
+<script src="{% static 'diary/js/audio_recorder.js' %}"></script>
+<script src="{% static 'conference/js/conference_page.js' %}"></script>
+{% endblock %}

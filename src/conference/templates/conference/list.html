@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Conferences{% endblock %}
+{% block content %}
+<main class="sheet">
+  <header class="bar">
+    <a href="{% url 'conference:record' %}">Record</a>
+    <a href="{% url 'diary:voice' %}">Diary</a>
+    <a href="{% url 'accounts:logout' %}">Sign out</a>
+  </header>
+  <h1>Conferences</h1>
+  {% if not conferences %}
+  <p>No conferences yet.</p>
+  {% endif %}
+  <ul class="entries">
+    {% for conference in conferences %}
+    <li>
+      <p>{{ conference.content_text|default:"No transcript yet." }}</p>
+      <p class="meta">{{ conference.started_at }} · {{ conference.status }} · {{ conference.total_duration_seconds|default:"0" }}s · {{ conference.segments.all|length }} segment{{ conference.segments.all|length|pluralize }}</p>
+      {% if conference.segments.all %}
+      <ul class="attach-list">
+        {% for segment in conference.segments.all %}
+        <li>
+          <span>#{{ segment.sequence }}</span>
+          <span class="meta">{{ segment.recording_duration_seconds|default:"?" }}s</span>
+          <span>{{ segment.content_text|default:segment.transcription_error }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</main>
+{% endblock %}

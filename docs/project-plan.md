@@ -44,9 +44,9 @@ Diary questions stay on short entries. A finished conference is not classified w
 
 Build order:
 
-1. Start, roll over at 240 seconds, and stop, including a short final segment, on one conference. No classification.
-2. Transcribe each segment as it arrives.
-3. After stop, one classification call. Segment texts stay in order as parts of that conference.
+1. [x] Start, roll over at 240 seconds, and stop, including a short final segment, on one conference. No classification.
+2. [x] Transcribe each segment as it arrives.
+3. [ ] After stop, one classification call. Segment texts stay in order as parts of that conference. The question set is not defined yet.
 
 `recording_group_id` on a diary entry is not the conference model.
 
