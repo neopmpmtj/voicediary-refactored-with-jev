@@ -10,13 +10,14 @@ Do not commit secrets. Sample env and credential files stay reference-only.
 
 **Done**
 
-- Phase one input and classify is implemented (Google OAuth, voice/text, transcription, Jev, usage log).
-- Settings split: `src.config.settings.dev`, `src.config.settings.prod`, `src.config.settings.test`. Apps live under `src/`. Local `.env` points at dev.
+- Phase one input and classify is implemented and working locally (Google OAuth, voice/text, transcription, TypeSafe System One, usage log).
+- Settings split under `src/config/settings/`. Apps live under `src/`. Local `.env` points at `src.config.settings.dev`.
+- Jev calls `https://api.typesafe.ai/v1/systemone` with a TypeSafe console `apikey_`. Sample Google callback path `/src.accounts/google/callback/` is aliased so the existing Cloud client works.
 
 **Not done**
 
-- Phase two summary (conditions undefined). Phase-three backlog. Service-worker 404 left paused. Settings split not committed.
+- Phase two summary (conditions undefined). Phase-three backlog. Service-worker 404 left paused. `src/` move and settings split not committed.
 
 **Next**
 
-- Restart runserver on `src.config.settings.dev`. Phase two when summary conditions are chosen.
+- Phase two when summary conditions are chosen. Commit the `src/` layout if wanted.
