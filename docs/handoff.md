@@ -1,4 +1,4 @@
-> **Last updated:** 2026-09-27 16:09 WEST (Europe/Lisbon)
+> **Last updated:** 2026-09-27 16:40 WEST (Europe/Lisbon)
 > Replace with the current date and time whenever you edit this file.
 
 # Session handoff
@@ -8,9 +8,10 @@
 - Phase one is running locally: Google login, voice upload, OpenAI transcription, TypeSafe classification. SQLite. Durations in seconds. No Stripe, quotas, translation, retrieval, or Celery.
 - Apps live under `src/` (`src.accounts`, `src.diary`, `src.conference`, `src.config`). Settings: `src.config.settings.dev` / `.prod` / `.test`.
 - File attachments stay on diary entries. User files under `media/attachments/`. Processed diary audio under `media/artifacts/`.
+- Voice-page attach bugs are fixed on `cursor/fix-audio-attachments-2973` (PR #4): Attach is a real button, empty Stop uploads queued files instead of dropping them, CSRF token is on the page, and the entries Add-files form reports success or asks for a file. Browser walkthrough: attach `note.txt` on Record, Save files, then add `note.pdf` on Entries.
 - Conferencing is a separate app. The user opens `/conference/`. One conference row holds the conversation. Each upload is a segment under `media/conferences/<user>/<conference>/`. A full segment is at most 240 seconds and does not close the conference. The last segment, of any shorter length, closes it. Segment transcripts are joined in sequence order. Diary JEV is not called. Classification questions for a finished conference are not defined yet.
 - Diary voice links to Conference. Held-part crash backups from a conference are not recovered as diary entries.
-- Pytest: 29 passed. Django check is clean.
+- Pytest: 31 passed. Django check is clean.
 
 ## Not done
 
@@ -21,7 +22,6 @@
 - `GET /service-worker.js` returns 404. The new app does not register a worker.
 - `ffprobe` sometimes logs `Could not parse ffprobe duration: N/A` on upload.
 - Google Cloud authorized redirect is still the sample `/src.accounts/...` path.
-- Browser recording of a conference was not clicked through here (Google login, no browser tools). Start, segment upload, stop, and page markup were checked with the Django test client.
 
 ## Next
 
