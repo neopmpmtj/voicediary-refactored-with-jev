@@ -35,6 +35,8 @@ class Segment(models.Model):
     processed_duration_seconds = models.FloatField(null=True, blank=True)
     relative_path = models.CharField(max_length=500)
     processed_relative_path = models.CharField(max_length=500, blank=True, default="")
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

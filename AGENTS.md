@@ -17,6 +17,8 @@ Do not commit secrets. Sample env and credential files stay reference-only.
 - Voice-page attach + entries Add-files bugs fixed (PR #4): button opens the picker, empty Stop saves queued files, entries form shows success/error.
 - Conferencing app at `/conference/`: one conversation, 240-second segments plus a short final segment, transcripts joined in order. No diary classification.
 - Visual shell matches the old Voice Diary chrome (Tailwind, dark, red record button, pulse). `docs/ui-rules.md`. Strings wrapped in `{% trans %}`.
+- Entries list hides an attachment whose file is gone or soft-deleted. `media_release` deletes the file and soft-deletes that row. A file-only entry is soft-deleted when it has no remaining files. Voice and text entries stay.
+- Entries cards have Delete, Edit, and Copy. Delete soft-deletes the entry and frees attached files. Edit saves `content_text` in a modal. Copy uses the clipboard.
 
 **Not done**
 
@@ -28,3 +30,11 @@ Do not commit secrets. Sample env and credential files stay reference-only.
 **Next**
 
 - Interface language. Conference classification can proceed beside that.
+
+## Commands
+
+- `media_release <path>` (`--json`) — delete a file under `media/`, then soft-delete the row that stored the path. `src/diary/management/commands/media_release.py`
+- `entry_list --email <email>` (`--json`) — list active entries for that account. `src/diary/management/commands/entry_list.py`
+- `entry_show <id>` (`--email`, `--json`) — print one entry's text. `src/diary/management/commands/entry_show.py`
+- `entry_update <id> --text "..."` (`--email`, `--json`) — overwrite entry text. `src/diary/management/commands/entry_update.py`
+- `entry_delete <id>` (`--email`, `--json`) — soft-delete an entry and free attached files. No prompt. `src/diary/management/commands/entry_delete.py`

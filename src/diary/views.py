@@ -10,6 +10,7 @@ from django.views.decorators.http import require_http_methods
 from src.diary.models import Attachment, Entry
 from src.diary.services import (
     AttachmentError,
+    delete_entry,
     entry_payload,
     ingest_audio,
     ingest_files,
@@ -17,6 +18,7 @@ from src.diary.services import (
     list_entries,
     recorder_max_seconds,
     store_attachments,
+    update_entry,
 )
 from src.diary.storage import attachment_disk_path, attachment_path_is_allowed
 from src.diary.transcription import TranscriptionError
@@ -103,7 +105,7 @@ def upload_files(request):
     entry_id = request.POST.get("entry_id")
     try:
         if entry_id:
-            entry = get_object_or_404(Entry, pk=entry_id, user=request.user)
+            entry = get_object_or_404(Entry, pk=entry_id, user=request.user, is_deleted=False)
             store_attachments(request.user, entry, files)
         else:
             entry = ingest_files(request.user, files)
@@ -123,7 +125,7 @@ def upload_files(request):
 
 @login_required
 def download_attachment(request, attachment_id):
-    attachment = get_object_or_404(Attachment, pk=attachment_id, user=request.user)
+    attachment = get_object_or_404(Attachment, pk=attachment_id, user=request.user, is_deleted=False)
     if not attachment_path_is_allowed(request.user.pk, attachment.relative_path):
         return JsonResponse({"error": "not_found", "message": "File is not available."}, status=404)
     path = attachment_disk_path(attachment.relative_path)
@@ -133,3 +135,26 @@ def download_attachment(request, attachment_id):
 @login_required
 def entry_list(request):
     return render(request, "diary/list.html", {"entries": list_entries(request.user)})
+
+
+@login_required
+@require_http_methods(["POST"])
+def entry_delete(request, entry_id):
+    entry = get_object_or_404(Entry, pk=entry_id, user=request.user, is_deleted=False)
+    result = delete_entry(request.user, entry)
+    if _wants_json(request):
+        return JsonResponse(result)
+    messages.success(request, "Entry removed.")
+    return redirect("diary:list")
+
+
+@login_required
+@require_http_methods(["POST"])
+def entry_edit(request, entry_id):
+    entry = get_object_or_404(Entry, pk=entry_id, user=request.user, is_deleted=False)
+    text = request.POST.get("content_text", "")
+    entry = update_entry(request.user, entry, text)
+    if _wants_json(request):
+        return JsonResponse(entry_payload(entry))
+    messages.success(request, "Entry saved.")
+    return redirect("diary:list")

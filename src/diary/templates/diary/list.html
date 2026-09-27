@@ -1,5 +1,5 @@
 {% extends "base_dashboard.html" %}
-{% load i18n %}
+{% load i18n static %}
 
 {% block title %}{% trans "My Entries" %} - VoiceDiary{% endblock %}
 {% block page_title %}{% trans "My Entries" %}{% endblock %}
@@ -23,12 +23,12 @@
 
   <ul class="space-y-3">
     {% for entry in entries %}
-    <li class="vd-card p-4 space-y-3">
-      <p class="text-sm text-foreground whitespace-pre-wrap">{{ entry.content_text }}</p>
+    <li class="vd-card p-4 space-y-3" data-entry-id="{{ entry.id }}">
+      <p class="entry-content-text text-sm text-foreground whitespace-pre-wrap">{{ entry.content_text }}</p>
       <p class="text-xs text-muted-foreground">{{ entry.created_at }} · {{ entry.item_type }} · {{ entry.route|default:"unclassified" }} · {{ entry.intent }} · {{ entry.subject }}</p>
-      {% if entry.attachments.all %}
+      {% if entry.present_attachments %}
       <ul class="space-y-1 text-sm">
-        {% for file in entry.attachments.all %}
+        {% for file in entry.present_attachments %}
         <li class="flex items-center justify-between gap-2">
           <a href="{% url 'diary:download' file.id %}" class="text-accent hover:underline truncate">{{ file.original_filename }}</a>
           <span class="text-xs text-muted-foreground shrink-0">{{ file.uploaded_at }}</span>
@@ -45,6 +45,24 @@
         <input id="files-{{ entry.id }}" type="file" name="files" multiple required class="text-sm text-muted-foreground">
         <button type="submit" class="vd-btn vd-btn-ghost px-3 py-1.5 text-xs border border-input">{% trans "Add files" %}</button>
       </form>
+      <div class="flex items-center justify-between pt-3 border-t border-border">
+        <form method="post" action="{% url 'diary:delete' entry.id %}" class="entry-delete-form"
+              data-confirm="{% trans 'Remove this entry from your voice diary?' %}">
+          {% csrf_token %}
+          <button type="submit" class="vd-btn vd-btn-destructive px-3 py-1 text-xs"
+                  aria-label="{% trans 'Delete entry' %}">{% trans "Delete" %}</button>
+        </form>
+        <div class="flex items-center gap-2">
+          <button type="button"
+                  class="vd-btn vd-btn-ghost px-3 py-1 text-xs border border-input entry-edit-btn"
+                  data-edit-url="{% url 'diary:edit' entry.id %}"
+                  aria-label="{% trans 'Edit entry' %}">{% trans "Edit" %}</button>
+          <button type="button"
+                  class="vd-btn vd-btn-ghost px-3 py-1 text-xs border border-input entry-copy-btn"
+                  data-copied="{% trans 'Copied' %}"
+                  aria-label="{% trans 'Copy text' %}">{% trans "Copy" %}</button>
+        </div>
+      </div>
     </li>
     {% endfor %}
   </ul>
@@ -59,4 +77,24 @@
     </form>
   </section>
 </div>
+
+<dialog id="edit-entry-modal"
+        class="relative fixed inset-0 z-50 m-auto w-full max-w-lg rounded-lg border bg-card p-0 shadow-xl backdrop:bg-foreground/40 backdrop:backdrop-blur-sm open:animate-fade-in"
+        aria-labelledby="edit-modal-title">
+  <form id="edit-entry-form" method="post" class="p-6 space-y-4">
+    {% csrf_token %}
+    <h2 id="edit-modal-title" class="text-lg font-semibold text-foreground">{% trans "Edit Entry" %}</h2>
+    <label for="edit-entry-content" class="block text-sm font-medium text-foreground">{% trans "Content" %}</label>
+    <textarea id="edit-entry-content" name="content_text"
+              class="vd-textarea w-full min-h-[140px]" rows="6"></textarea>
+    <div class="flex items-center justify-end gap-3 pt-2">
+      <button type="button" id="edit-entry-cancel" class="vd-btn vd-btn-ghost px-4 py-2">{% trans "Cancel" %}</button>
+      <button type="submit" class="vd-btn vd-btn-accent px-4 py-2">{% trans "Save" %}</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'diary/js/entries_list.js' %}"></script>
 {% endblock %}

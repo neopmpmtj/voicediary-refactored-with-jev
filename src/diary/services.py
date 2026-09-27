@@ -4,7 +4,10 @@ from decimal import Decimal
 from pathlib import Path
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import UploadedFile
+from django.db.models import Q
+from django.utils import timezone
 from decouple import config
 
 from src.diary.audio import probe_duration_seconds, strip_silence
@@ -12,9 +15,13 @@ from src.diary.jev import JevError, decide
 from src.diary.models import Attachment, Entry, ItemType, UsageLog
 from src.diary.storage import (
     ATTACHMENTS_SUBDIR,
+    MediaPathError,
     allocate_unique_attachment_filename,
     artifacts_dir_for_user,
+    attachment_disk_path,
+    attachment_path_is_allowed,
     attachments_dir_for_entry,
+    resolve_media_file_path,
     sanitize_storage_filename,
 )
 from src.diary.transcription import TranscriptionError, transcribe_audio
@@ -26,6 +33,14 @@ NOUL_YES = 0.5
 
 
 class AttachmentError(Exception):
+    pass
+
+
+class MediaReleaseError(Exception):
+    pass
+
+
+class EntryLookupError(Exception):
     pass
 
 
@@ -77,7 +92,7 @@ def _log_usage(user, entry, service, usage_type, amount):
 
 
 def _classify(user, text, exclude_id=None):
-    existing_qs = Entry.objects.filter(user=user)
+    existing_qs = Entry.objects.filter(user=user, is_deleted=False)
     if exclude_id is not None:
         existing_qs = existing_qs.exclude(pk=exclude_id)
     existing = list(existing_qs.order_by("-created_at"))
@@ -127,7 +142,7 @@ def _attachment_payload(entry):
             "filename": item.original_filename,
             "uploaded_at": item.uploaded_at.isoformat(),
         }
-        for item in entry.attachments.all()
+        for item in entry.attachments.filter(is_deleted=False)
     ]
 
 
@@ -141,7 +156,7 @@ def entry_payload(entry):
         "subject": entry.subject,
         "classification_error": entry.classification_error,
         "attachments": _attachment_payload(entry),
-        "attachment_count": entry.attachments.count(),
+        "attachment_count": entry.attachments.filter(is_deleted=False).count(),
     }
 
 
@@ -272,4 +287,182 @@ def ingest_audio(user, upload, recording_duration_seconds=None, recording_group_
 
 
 def list_entries(user):
-    return Entry.objects.filter(user=user).prefetch_related("attachments").order_by("-created_at")
+    """Entries for the list page. Missing or soft-deleted files are omitted from links.
+
+    Loading this page does not write. A file that is gone stays in the database until
+    media_release soft-deletes that row.
+    """
+    rows = (
+        Entry.objects.filter(user=user, is_deleted=False)
+        .prefetch_related("attachments")
+        .order_by("-created_at")
+    )
+    visible = []
+    for entry in rows:
+        present = [
+            item
+            for item in entry.attachments.all()
+            if not item.is_deleted and attachment_path_is_allowed(user.pk, item.relative_path)
+        ]
+        entry.present_attachments = present
+        visible.append(entry)
+    return visible
+
+
+def _soft_delete(row, now):
+    if row.is_deleted:
+        return False
+    row.is_deleted = True
+    row.deleted_at = now
+    row.save(update_fields=["is_deleted", "deleted_at"])
+    return True
+
+
+def release_file(path):
+    """Delete a file under media/ and soft-delete the row that stored the path."""
+    from src.conference.models import Segment
+
+    try:
+        resolved, relative = resolve_media_file_path(path)
+    except MediaPathError as exc:
+        raise MediaReleaseError(str(exc)) from exc
+    bytes_freed = 0
+    if resolved.is_file():
+        bytes_freed = resolved.stat().st_size
+        resolved.unlink()
+    now = timezone.now()
+    attachment_ids = []
+    entry_ids = []
+    for item in Attachment.objects.filter(relative_path=relative, is_deleted=False).select_related("entry"):
+        _soft_delete(item, now)
+        attachment_ids.append(str(item.id))
+        entry = item.entry
+        if entry.item_type == ItemType.FILE and not entry.is_deleted:
+            still_active = entry.attachments.filter(is_deleted=False).exists()
+            if not still_active:
+                _soft_delete(entry, now)
+                entry_ids.append(str(entry.id))
+    segment_ids = []
+    segments = Segment.objects.filter(is_deleted=False).filter(
+        Q(relative_path=relative) | Q(processed_relative_path=relative)
+    )
+    for segment in segments:
+        _soft_delete(segment, now)
+        segment_ids.append(str(segment.id))
+    return {
+        "path": str(resolved),
+        "relative_path": relative,
+        "bytes_freed": bytes_freed,
+        "attachments": attachment_ids,
+        "entries": entry_ids,
+        "segments": segment_ids,
+    }
+
+
+def _unlink_stored_file(relative_path):
+    path = attachment_disk_path(relative_path)
+    try:
+        resolved = path.resolve()
+        if resolved.is_file():
+            size = resolved.stat().st_size
+            resolved.unlink()
+            return size
+    except OSError:
+        return 0
+    return 0
+
+
+def _active_attachments(entry):
+    return [item for item in entry.attachments.all() if not item.is_deleted]
+
+
+def entry_list_item(entry):
+    return {
+        "id": str(entry.id),
+        "item_type": entry.item_type,
+        "created_at": entry.created_at.isoformat(),
+        "content_text": entry.content_text,
+        "route": entry.route,
+        "intent": entry.intent,
+        "subject": entry.subject,
+        "attachment_count": len(_active_attachments(entry)),
+    }
+
+
+def entry_show_item(entry):
+    data = entry_list_item(entry)
+    data["attachments"] = [item.original_filename for item in _active_attachments(entry)]
+    return data
+
+
+def user_by_email(email):
+    User = get_user_model()
+    try:
+        return User.objects.get(email=email)
+    except User.DoesNotExist as exc:
+        raise EntryLookupError("Unknown user.") from exc
+
+
+def _entry_uuid(entry_id):
+    try:
+        return uuid.UUID(str(entry_id))
+    except (TypeError, ValueError) as exc:
+        raise EntryLookupError("Unknown entry.") from exc
+
+
+def get_active_entry(entry_id, email=None):
+    key = _entry_uuid(entry_id)
+    rows = Entry.objects.filter(pk=key, is_deleted=False).prefetch_related("attachments")
+    if email:
+        rows = rows.filter(user=user_by_email(email))
+    entry = rows.first()
+    if entry is None:
+        raise EntryLookupError("Unknown entry.")
+    return entry
+
+
+def entries_for_email(email):
+    user = user_by_email(email)
+    rows = (
+        Entry.objects.filter(user=user, is_deleted=False)
+        .prefetch_related("attachments")
+        .order_by("-created_at")
+    )
+    return [entry_list_item(entry) for entry in rows]
+
+
+def show_entry(entry_id, email=None):
+    return entry_show_item(get_active_entry(entry_id, email=email))
+
+
+def update_entry(user, entry, text):
+    entry.content_text = text if text is not None else ""
+    entry.save(update_fields=["content_text"])
+    return entry
+
+
+def update_entry_by_id(entry_id, text, email=None):
+    entry = get_active_entry(entry_id, email=email)
+    update_entry(entry.user, entry, text)
+    return entry_show_item(entry)
+
+
+def delete_entry(user, entry):
+    now = timezone.now()
+    bytes_freed = 0
+    attachment_ids = []
+    for item in entry.attachments.filter(is_deleted=False):
+        bytes_freed += _unlink_stored_file(item.relative_path)
+        _soft_delete(item, now)
+        attachment_ids.append(str(item.id))
+    _soft_delete(entry, now)
+    return {
+        "id": str(entry.id),
+        "attachments": attachment_ids,
+        "bytes_freed": bytes_freed,
+    }
+
+
+def delete_entry_by_id(entry_id, email=None):
+    entry = get_active_entry(entry_id, email=email)
+    return delete_entry(entry.user, entry)

@@ -28,6 +28,8 @@ class Entry(models.Model):
     continues_prior_probability = models.FloatField(null=True, blank=True)
     route = models.CharField(max_length=32, blank=True, default="")
     classification_error = models.TextField(blank=True, default="")
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -45,6 +47,8 @@ class Attachment(models.Model):
     stored_name = models.CharField(max_length=255)
     mime_type = models.CharField(max_length=120, blank=True, default="")
     relative_path = models.CharField(max_length=500)
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

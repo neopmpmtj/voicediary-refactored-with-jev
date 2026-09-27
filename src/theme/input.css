@@ -123,6 +123,14 @@
     @apply bg-secondary;
   }
 
+  .vd-btn-destructive {
+    @apply bg-destructive text-destructive-foreground;
+  }
+
+  .vd-btn-destructive:hover {
+    @apply bg-destructive/90;
+  }
+
   .vd-record-btn {
     @apply flex items-center justify-center rounded-full border-0 cursor-pointer
            transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2

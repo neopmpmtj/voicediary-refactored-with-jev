@@ -169,6 +169,42 @@ def test_audio_upload_with_files_links_them(mock_strip, mock_probe, mock_transcr
     assert entry.attachments.get().original_filename == "with-voice.pdf"
 
 
+def test_entries_page_hides_a_missing_attachment_and_keeps_the_row(auth_client, user, settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+    with patch("src.diary.services.decide", side_effect=_classify_ok):
+        from src.diary.services import ingest_text
+        entry = ingest_text(user, "Keep this note", uploads=[_pdf("gone.pdf")])
+    listed = auth_client.get("/entries/")
+    assert b"gone.pdf" in listed.content
+    attachment = entry.attachments.get()
+    path = tmp_path / attachment.relative_path
+    path.rename(path.with_name("renamed.pdf"))
+    refreshed = auth_client.get("/entries/")
+    assert b"Keep this note" in refreshed.content
+    assert b"gone.pdf" not in refreshed.content
+    assert b"No files attached yet." in refreshed.content
+    attachment.refresh_from_db()
+    assert attachment.is_deleted is False
+    entry.refresh_from_db()
+    assert entry.is_deleted is False
+    assert entry.content_text == "Keep this note"
+
+
+def test_entries_page_keeps_a_file_entry_when_its_folder_is_gone(auth_client, user, settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+    from src.diary.services import ingest_files
+    entry = ingest_files(user, [_pdf("solo.pdf")])
+    entry_id = entry.id
+    assert b"solo.pdf" in auth_client.get("/entries/").content
+    folder = (tmp_path / entry.attachments.get().relative_path).parent
+    folder.rename(folder.with_name(folder.name + "-renamed"))
+    refreshed = auth_client.get("/entries/")
+    assert b"solo.pdf" in refreshed.content
+    assert b"No files attached yet." in refreshed.content
+    assert Entry.objects.filter(pk=entry_id, is_deleted=False).exists()
+    assert Attachment.objects.filter(entry_id=entry_id, is_deleted=False).exists()
+
+
 def test_download_attachment_is_limited_to_owner(auth_client, user, django_user_model, settings, tmp_path):
     settings.MEDIA_ROOT = tmp_path
     from src.diary.services import ingest_files

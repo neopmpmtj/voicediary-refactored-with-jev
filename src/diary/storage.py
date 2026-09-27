@@ -58,6 +58,26 @@ def attachment_disk_path(relative_path):
     return Path(settings.MEDIA_ROOT) / relative_path
 
 
+class MediaPathError(Exception):
+    pass
+
+
+def resolve_media_file_path(path):
+    """Return the resolved path and its posix path relative to MEDIA_ROOT."""
+    root = Path(settings.MEDIA_ROOT).resolve()
+    candidate = Path(path).expanduser()
+    if not candidate.is_absolute():
+        candidate = Path.cwd() / candidate
+    try:
+        resolved = candidate.resolve()
+        relative = resolved.relative_to(root)
+    except (OSError, ValueError) as exc:
+        raise MediaPathError("Path is outside media.") from exc
+    if resolved.is_dir():
+        raise MediaPathError("Path is a directory.")
+    return resolved, relative.as_posix()
+
+
 def attachment_path_is_allowed(user_id, relative_path):
     root = (Path(settings.MEDIA_ROOT) / ATTACHMENTS_SUBDIR / str(user_id)).resolve()
     try:

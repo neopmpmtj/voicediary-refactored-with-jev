@@ -6,6 +6,7 @@ from pathlib import Path
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.db import IntegrityError, transaction
+from django.db.models import Prefetch
 from django.utils import timezone
 
 from src.conference.models import Conference, ConferenceStatus, Segment
@@ -151,7 +152,16 @@ def ingest_segment(user, conference_id, upload, *, sequence, recording_duration_
 
 
 def list_conferences(user):
-    return Conference.objects.filter(user=user).prefetch_related("segments").order_by("-started_at")
+    return (
+        Conference.objects.filter(user=user)
+        .prefetch_related(
+            Prefetch(
+                "segments",
+                queryset=Segment.objects.filter(is_deleted=False).order_by("sequence"),
+            )
+        )
+        .order_by("-started_at")
+    )
 
 
 def conference_payload(conference):
@@ -161,5 +171,5 @@ def conference_payload(conference):
         "status": conference.status,
         "content_text": conference.content_text,
         "total_duration_seconds": conference.total_duration_seconds,
-        "segment_count": conference.segments.count(),
+        "segment_count": conference.segments.filter(is_deleted=False).count(),
     }
