@@ -491,6 +491,7 @@ class VoiceDiaryRecorder {
                     id: group + ':' + index,
                     group: group,
                     index: index,
+                    owner: this.backupOwner || '',
                     buffer: buffer,
                     mimeType: blob.type || this.mimeType || 'audio/webm',
                     durationSeconds: durationSeconds || 0,
@@ -610,6 +611,8 @@ class VoiceDiaryRecorder {
             for (const key of keys) {
                 if (this.state !== 'idle') break;   // user is recording — retry on a later visit
                 const records = groups[key].slice().sort((a, b) => (a.index || 0) - (b.index || 0));
+                const owner = (records[0] && records[0].owner) || '';
+                if (owner !== (this.backupOwner || '')) continue;
                 const newest = records.reduce((n, r) => Math.max(n, r.updatedAt || 0), 0);
                 if (Date.now() - newest < this.heldPartRecoveryMinAgeMs) continue;
                 const ok = await this._recoverOneTake(key, records);
@@ -678,6 +681,12 @@ class VoiceDiaryRecorder {
         formData.append('template_type', this.templateType);
         if (durationSeconds) formData.append('recording_duration_seconds', String(Math.round(durationSeconds)));
         if (groupId) formData.append('recording_group_id', groupId);
+        if (typeof this.appendUploadFields === 'function') {
+            this.appendUploadFields(formData, {
+                background: true,
+                durationSeconds: durationSeconds,
+            });
+        }
         const response = await fetch(this.uploadUrl, {
             method: 'POST',
             body: formData,
@@ -1038,6 +1047,12 @@ class VoiceDiaryRecorder {
                 formData.append('transcribe_only', '1');
             }
             this._appendRecordingMeta(formData, durationSeconds);
+            if (typeof this.appendUploadFields === 'function') {
+                this.appendUploadFields(formData, {
+                    background: background,
+                    durationSeconds: durationSeconds,
+                });
+            }
 
             files.forEach((file) => {
                 formData.append('files', file);
