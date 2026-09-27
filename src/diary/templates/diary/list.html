@@ -15,9 +15,34 @@
     {% for entry in entries %}
     <li>
       <p>{{ entry.content_text }}</p>
-      <p class="meta">{{ entry.created_at }} · {{ entry.route|default:"unclassified" }} · {{ entry.intent }} · {{ entry.subject }}</p>
+      <p class="meta">{{ entry.created_at }} · {{ entry.item_type }} · {{ entry.route|default:"unclassified" }} · {{ entry.intent }} · {{ entry.subject }}</p>
+      {% if entry.attachments.all %}
+      <ul class="attach-list">
+        {% for file in entry.attachments.all %}
+        <li>
+          <a href="{% url 'diary:download' file.id %}">{{ file.original_filename }}</a>
+          <span class="meta">{{ file.uploaded_at }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <form method="post" action="{% url 'diary:upload_files' %}" enctype="multipart/form-data" class="attach-later">
+        {% csrf_token %}
+        <input type="hidden" name="entry_id" value="{{ entry.id }}">
+        <input type="file" name="files" multiple>
+        <button type="submit">Add files</button>
+      </form>
     </li>
     {% endfor %}
   </ul>
+  <section class="standalone">
+    <h2>Upload files</h2>
+    <p class="meta">Files saved here become their own entry when they are not attached to voice or text.</p>
+    <form method="post" action="{% url 'diary:upload_files' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="file" name="files" multiple required>
+      <button type="submit">Save files</button>
+    </form>
+  </section>
 </main>
 {% endblock %}

@@ -7,6 +7,15 @@
   var recordBtn = document.getElementById("recordBtn");
   var pauseBtn = document.getElementById("pauseBtn");
   var stopBtn = document.getElementById("stopBtn");
+  var saveFilesBtn = document.getElementById("saveFilesBtn");
+  var picker = window.DiaryAttachments({
+    onChange: function (files) {
+      var live = recorder && (recorder.state === "recording" || recorder.state === "paused" || recorder.state === "uploading" || recorder.state === "processing");
+      if (saveFilesBtn) {
+        saveFilesBtn.disabled = files.length === 0 || live;
+      }
+    },
+  });
 
   function showToast(message) {
     toast.hidden = false;
@@ -32,10 +41,14 @@
   recorder.onStateChange = function (state) {
     status.textContent = state;
     var live = state === "recording" || state === "paused";
-    recordBtn.disabled = live || state === "uploading" || state === "processing";
+    var busy = live || state === "uploading" || state === "processing";
+    recordBtn.disabled = busy;
     pauseBtn.disabled = state !== "recording" && state !== "paused";
     pauseBtn.textContent = state === "paused" ? "Resume" : "Pause";
     stopBtn.disabled = !live;
+    if (saveFilesBtn) {
+      saveFilesBtn.disabled = picker.files().length === 0 || busy;
+    }
   };
   recorder.onRollover = function () {
     showToast("Saved, continuing recording.");
@@ -58,7 +71,11 @@
     if (data.classification_error) {
       line += "\nClassification failed.";
     }
+    if (data.attachment_count) {
+      line += "\n" + data.attachment_count + " file(s) attached.";
+    }
     result.textContent = line;
+    picker.clear();
     status.textContent = "Saved";
   };
   recorder.onError = function (error) {
@@ -80,10 +97,49 @@
     }
   });
   stopBtn.addEventListener("click", function () {
-    recorder.stopRecording().catch(function (error) {
+    recorder.stopRecording(picker.files()).then(function () {
+      picker.clear();
+    }).catch(function (error) {
       status.textContent = error.message || "Could not stop";
     });
   });
+  if (saveFilesBtn) {
+    saveFilesBtn.addEventListener("click", function () {
+      var files = picker.files();
+      if (!files.length) {
+        return;
+      }
+      var formData = new FormData();
+      files.forEach(function (file) {
+        formData.append("files", file);
+      });
+      saveFilesBtn.disabled = true;
+      fetch(config.filesUploadUrl, {
+        method: "POST",
+        body: formData,
+        headers: {
+          "X-CSRFToken": recorder.getCsrfToken(),
+          "Accept": "application/json",
+        },
+      }).then(function (response) {
+        return response.json().then(function (data) {
+          if (!response.ok) {
+            throw new Error(data.message || data.error || "Upload failed");
+          }
+          return data;
+        });
+      }).then(function (data) {
+        result.hidden = false;
+        result.textContent = (data.content_text || "Files saved") + "\n" + (data.attachment_count || files.length) + " file(s).";
+        status.textContent = "Saved";
+        picker.clear();
+      }).catch(function (error) {
+        status.textContent = error.message || "Could not save files";
+      }).finally(function () {
+        saveFilesBtn.disabled = picker.files().length === 0;
+      });
+    });
+  }
 
   recorder.recoverHeldParts().catch(function () {});
 })();

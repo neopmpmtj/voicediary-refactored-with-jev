@@ -54,3 +54,14 @@ def test_other_subjects_keep_their_own_route():
     assert derive_route("freeform", "diary") == "diary"
     assert derive_route("list", "finance") == "finance"
     assert derive_route("todo", "diary") == "diary"
+
+
+def test_prior_context_includes_file_entries_like_text():
+    newest_first = [
+        _Entry("file", None),
+        _Entry("text", None),
+    ]
+    chosen = select_prior_entries(newest_first, count=2, max_seconds=240)
+    assert len(chosen) == 2
+    assert chosen[0].item_type == "text"
+    assert chosen[1].item_type == "file"

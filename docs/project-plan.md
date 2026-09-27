@@ -1,6 +1,7 @@
 # Project plan
 
 - [x] Phase one — input and classify
+- [x] File attachments (local, timestamped, optional link to an input)
 - [ ] Phase two — summary
 - [ ] Phase three — some of the backlog
 
@@ -13,6 +14,15 @@ Jev classifies each entry in one call: intent (freeform, list, follow-up, todo, 
 If the intent is follow-up or reschedule, or the subject is appointment, the stored route is calendar. That wins even when the user asked for the diary. The diary answer is still stored.
 
 Usage is logged. Transcription is stored as audio minutes, because the transcription response has no token count. Jev input and output tokens are stored. There is no quota gate and no Stripe charge.
+
+## File attachments
+
+Any file type can be added at any stage. Each file stores the upload date and time. User files live under `media/attachments/`. Processed audio artifacts live under `media/artifacts/`.
+
+- Files sent when a recording stops or a text entry is saved are linked to that input.
+- If no file is sent, the input has no attachment link.
+- Files uploaded with no voice or text in progress become their own input (`item_type=file`).
+- Files can also be added later to an existing entry on the entries list.
 
 ## Phase two — summary
 
