@@ -1,0 +1,65 @@
+body {
+  font-family: Georgia, serif;
+  margin: 0;
+  background: #f6f4ef;
+  color: #1c1915;
+}
+.sheet {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+.bar, .controls, .dots {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+.timer {
+  font-size: 2.5rem;
+  margin: 1.5rem 0 0.5rem;
+}
+.status, .meta, .toast {
+  color: #5c564c;
+}
+.toast {
+  background: #fff;
+  border: 1px solid #d9d3c7;
+  padding: 0.75rem 1rem;
+}
+button, .button {
+  font: inherit;
+  background: #1c1915;
+  color: #f6f4ef;
+  border: 0;
+  padding: 0.6rem 1rem;
+  text-decoration: none;
+  display: inline-block;
+}
+button:disabled {
+  opacity: 0.4;
+}
+textarea, input[type="password"] {
+  width: 100%;
+  font: inherit;
+  margin: 0.5rem 0 1rem;
+}
+.entries {
+  list-style: none;
+  padding: 0;
+}
+.entries li {
+  background: #fff;
+  border: 1px solid #d9d3c7;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+}
+.messages {
+  list-style: none;
+  padding: 0.5rem 1.5rem;
+  background: #efe7d6;
+}
+.result {
+  white-space: pre-wrap;
+  background: #fff;
+  padding: 1rem;
+}

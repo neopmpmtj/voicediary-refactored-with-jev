@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Entries{% endblock %}
+{% block content %}
+<main class="sheet">
+  <header class="bar">
+    <a href="{% url 'diary:voice' %}">Record</a>
+    <a href="{% url 'accounts:profile' %}">Profile</a>
+    <a href="{% url 'accounts:logout' %}">Sign out</a>
+  </header>
+  <h1>Entries</h1>
+  {% if not entries %}
+  <p>No entries yet.</p>
+  {% endif %}
+  <ul class="entries">
+    {% for entry in entries %}
+    <li>
+      <p>{{ entry.content_text }}</p>
+      <p class="meta">{{ entry.created_at }} · {{ entry.route|default:"unclassified" }} · {{ entry.intent }} · {{ entry.subject }}</p>
+    </li>
+    {% endfor %}
+  </ul>
+</main>
+{% endblock %}

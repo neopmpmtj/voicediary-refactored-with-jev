@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Text{% endblock %}
+{% block content %}
+<main class="sheet" data-swipe-content>
+  <header class="bar">
+    <a href="{% url 'diary:list' %}">Entries</a>
+    <span class="dots"><a href="{% url 'diary:voice' %}">Voice</a> <strong>Text</strong></span>
+    <a href="{% url 'accounts:logout' %}">Sign out</a>
+  </header>
+  {% if error %}<p class="status">{{ error }}</p>{% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <label for="text">Entry</label>
+    <textarea id="text" name="text" rows="8" required>{{ text|default:"" }}</textarea>
+    <button type="submit">Save</button>
+  </form>
+</main>
+<script>
+  document.body.setAttribute("data-swipe-current", "text");
+  document.body.setAttribute("data-swipe-voice-url", "{% url 'diary:voice' %}");
+  document.body.setAttribute("data-swipe-text-url", "{% url 'diary:text' %}");
+</script>
+<script src="{% static 'diary/js/swipe_nav.js' %}"></script>
+{% endblock %}

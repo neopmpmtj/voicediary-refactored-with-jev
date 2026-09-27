@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block content %}
+<main class="sheet">
+  <h1>Voice Diary</h1>
+  <p>Sign in with Google to record.</p>
+  <a class="button" href="{% url 'accounts:google_login' %}">Sign in with Google</a>
+</main>
+{% endblock %}

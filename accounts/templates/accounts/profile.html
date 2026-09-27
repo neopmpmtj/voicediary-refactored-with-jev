@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+<main class="sheet">
+  <h1>{{ user.email }}</h1>
+  <p>{% if connected %}Google is connected.{% else %}Google services are not connected.{% endif %}</p>
+  {% if scopes %}
+  <ul>
+    {% for scope in scopes %}
+    <li>{{ scope }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <p><a href="{% url 'accounts:google_connect' %}">Connect Google services</a></p>
+  <form method="post" action="{% url 'accounts:google_disconnect' %}">
+    {% csrf_token %}
+    <button type="submit">Disconnect Google</button>
+  </form>
+  <p><a href="{% url 'diary:voice' %}">Back to recording</a></p>
+</main>
+{% endblock %}

@@ -1,19 +1,19 @@
 ---
 name: Phase one input
-overview: "Phase one stores a raw diary entry and a Jev classification for a Google-authenticated user. Usage is logged. Summarizing is phase two. A backlog of everything else is kept for phase three."
+overview: Phase one stores a raw diary entry and a Jev classification for a Google-authenticated user. Usage is logged. Summarizing is phase two. A backlog of everything else is kept for phase three.
 todos:
   - id: accounts-oauth
     content: Add accounts app with full Google OAuth scopes and encrypted token storage
-    status: pending
+    status: completed
   - id: diary-input
     content: "Add diary app: current voice and text input screens, RECORDER_MAX_DURATION auto-restart, trim and silence removal, OpenAI transcription, audio-minute usage log, entry listing"
-    status: pending
+    status: completed
   - id: jev-classify
     content: Classify each entry with one Jev call, prior-entry context, the calendar-wins route rule, and store Jev token usage
-    status: pending
+    status: completed
   - id: tests-docs
     content: Add unit tests for context selection and routing, plus phase one, two, and three notes in docs/project-plan.md
-    status: pending
+    status: completed
 isProject: false
 ---
 

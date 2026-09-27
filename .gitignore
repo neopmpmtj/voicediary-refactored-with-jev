@@ -157,6 +157,7 @@ Thumbs.db
 # Media and local artifacts
 logs/
 audio/
+media/
 *.m4a
 *.mp3
 *.wav

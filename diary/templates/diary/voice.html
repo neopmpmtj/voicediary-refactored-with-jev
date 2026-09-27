@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Record{% endblock %}
+{% block content %}
+<main class="sheet" data-swipe-content>
+  <header class="bar">
+    <a href="{% url 'diary:list' %}">Entries</a>
+    <span class="dots"><strong>Voice</strong> <a href="{% url 'diary:text' %}">Text</a></span>
+    <a href="{% url 'accounts:logout' %}">Sign out</a>
+  </header>
+  <p id="timer" class="timer">00:00</p>
+  <p id="status" class="status">Ready</p>
+  <div class="controls">
+    <button type="button" id="recordBtn">Record</button>
+    <button type="button" id="pauseBtn" disabled>Pause</button>
+    <button type="button" id="stopBtn" disabled>Stop</button>
+  </div>
+  <p id="toast" class="toast" hidden></p>
+  <pre id="result" class="result" hidden></pre>
+</main>
+{{ recorder_config|json_script:"recorder-config" }}
+<script>
+  document.body.setAttribute("data-swipe-current", "voice");
+  document.body.setAttribute("data-swipe-voice-url", "{% url 'diary:voice' %}");
+  document.body.setAttribute("data-swipe-text-url", "{% url 'diary:text' %}");
+</script>
+<script src="{% static 'diary/js/audio_recorder.js' %}"></script>
+<script src="{% static 'diary/js/swipe_nav.js' %}"></script>
+<script src="{% static 'diary/js/voice_page.js' %}"></script>
+{% endblock %}

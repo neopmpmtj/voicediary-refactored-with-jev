@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Link Google{% endblock %}
+{% block content %}
+<main class="sheet">
+  <h1>Link Google</h1>
+  <p>Enter the password for {{ email }} to link this Google account.</p>
+  <form method="post">
+    {% csrf_token %}
+    <label>Password <input type="password" name="password" required></label>
+    <button type="submit">Link account</button>
+  </form>
+</main>
+{% endblock %}
