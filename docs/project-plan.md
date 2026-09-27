@@ -2,6 +2,7 @@
 
 - [x] Phase one — input and classify
 - [x] File attachments (local, timestamped, optional link to an input)
+- [ ] Conferencing
 - [ ] Phase two — summary
 - [ ] Phase three — some of the backlog
 
@@ -23,6 +24,31 @@ Any file type can be added at any stage. Each file stores the upload date and ti
 - If no file is sent, the input has no attachment link.
 - Files uploaded with no voice or text in progress become their own input (`item_type=file`).
 - Files can also be added later to an existing entry on the entries list.
+
+## Conferencing
+
+A separate app from the diary. The user chooses this mode. The diary stays the short-note path.
+
+A conference is one conversation. Audio is stored as segments of at most `RECORDER_MAX_DURATION` (default 240 seconds). When the user stops, the last segment is whatever length remains, and it still belongs to that conference.
+
+Two tables:
+
+- **Conference** — the conversation. Created when recording starts, closed when the user stops. Holds the user, the joined transcript, the total duration, and classification after stop.
+- **Segment** — one audio file in order. Sequence number, duration, transcript, and file location. Order is the sequence number.
+
+Audio lives under `media/conferences/<user>/<conference>/`, separate from diary recordings and from user attachments.
+
+Pause, resume, and microphone interruption are merged inside a segment before upload. The 240-second boundary is the only split. Each full segment is uploaded and transcribed while recording continues. JEV is not called on a segment.
+
+Diary questions stay on short entries. A finished conference is not classified with that taxonomy. "Conference" is not a diary intent or subject, and it is not chosen because the audio is longer than 240 seconds. The mode already records that. Questions for the joined conference are a separate set and are not defined yet.
+
+Build order:
+
+1. Start, roll over at 240 seconds, and stop, including a short final segment, on one conference. No classification.
+2. Transcribe each segment as it arrives.
+3. After stop, one classification call. Segment texts stay in order as parts of that conference.
+
+`recording_group_id` on a diary entry is not the conference model.
 
 ## Phase two — summary
 
