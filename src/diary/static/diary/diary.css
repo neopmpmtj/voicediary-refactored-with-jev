@@ -26,7 +26,7 @@ body {
   border: 1px solid #d9d3c7;
   padding: 0.75rem 1rem;
 }
-button, .button {
+button, .button, label.button {
   font: inherit;
   background: #1c1915;
   color: #f6f4ef;
@@ -38,10 +38,13 @@ button, .button {
 button:disabled {
   opacity: 0.4;
 }
-textarea, input[type="password"] {
+textarea, input[type="password"], input[type="file"] {
   width: 100%;
   font: inherit;
   margin: 0.5rem 0 1rem;
+}
+label.button {
+  cursor: pointer;
 }
 .entries {
   list-style: none;
@@ -62,4 +65,45 @@ textarea, input[type="password"] {
   white-space: pre-wrap;
   background: #fff;
   padding: 1rem;
+}
+.attach {
+  margin: 1rem 0;
+}
+.attach-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+.attach-badge {
+  background: #1c1915;
+  color: #f6f4ef;
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.85rem;
+}
+.attach-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+}
+.attach-list li {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+.attach-later,
+.standalone form {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+.standalone {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #d9d3c7;
 }

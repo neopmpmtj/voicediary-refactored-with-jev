@@ -9,13 +9,24 @@ from decouple import config
 
 from src.diary.audio import probe_duration_seconds, strip_silence
 from src.diary.jev import JevError, decide
-from src.diary.models import Entry, ItemType, UsageLog
+from src.diary.models import Attachment, Entry, ItemType, UsageLog
+from src.diary.storage import (
+    ATTACHMENTS_SUBDIR,
+    allocate_unique_attachment_filename,
+    artifacts_dir_for_user,
+    attachments_dir_for_entry,
+    sanitize_storage_filename,
+)
 from src.diary.transcription import TranscriptionError, transcribe_audio
 
 logger = logging.getLogger(__name__)
 
 CALENDAR_INTENTS = {"follow-up", "reschedule"}
 NOUL_YES = 0.5
+
+
+class AttachmentError(Exception):
+    pass
 
 
 def recorder_max_seconds():
@@ -109,7 +120,18 @@ def _apply_classification(entry, payload):
     _log_usage(entry.user, entry, "jev", "output_tokens", usage.get("output_tokens") or 0)
 
 
-def _entry_payload(entry):
+def _attachment_payload(entry):
+    return [
+        {
+            "id": str(item.id),
+            "filename": item.original_filename,
+            "uploaded_at": item.uploaded_at.isoformat(),
+        }
+        for item in entry.attachments.all()
+    ]
+
+
+def entry_payload(entry):
     return {
         "item_id": str(entry.id),
         "status": "complete",
@@ -118,11 +140,62 @@ def _entry_payload(entry):
         "intent": entry.intent,
         "subject": entry.subject,
         "classification_error": entry.classification_error,
+        "attachments": _attachment_payload(entry),
+        "attachment_count": entry.attachments.count(),
     }
 
 
-def ingest_text(user, text):
+def store_attachments(user, entry, uploads):
+    """Save user files under attachments/ and link them to entry."""
+    created = []
+    uploads = [item for item in (uploads or []) if item]
+    if not uploads:
+        return created
+    folder = attachments_dir_for_entry(user.pk, entry.id)
+    used = set()
+    for upload in uploads:
+        safe_name = allocate_unique_attachment_filename(
+            folder,
+            sanitize_storage_filename(getattr(upload, "name", "") or "uploaded_file"),
+            used,
+        )
+        dest = folder / safe_name
+        with dest.open("wb") as out:
+            for chunk in upload.chunks():
+                out.write(chunk)
+        created.append(
+            Attachment.objects.create(
+                user=user,
+                entry=entry,
+                original_filename=(getattr(upload, "name", "") or safe_name)[:255],
+                stored_name=safe_name,
+                mime_type=getattr(upload, "content_type", "") or "",
+                relative_path=str(Path(ATTACHMENTS_SUBDIR) / str(user.pk) / str(entry.id) / safe_name),
+            )
+        )
+    return created
+
+
+def ingest_files(user, uploads):
+    """Attachment without an ongoing voice/text input becomes its own entry."""
+    uploads = [item for item in (uploads or []) if item]
+    if not uploads:
+        raise AttachmentError("Missing file upload")
+    names = [getattr(item, "name", "") or "file" for item in uploads]
+    entry = Entry.objects.create(
+        user=user,
+        item_type=ItemType.FILE,
+        content_text=", ".join(names),
+    )
+    store_attachments(user, entry, uploads)
+    return entry
+
+
+def ingest_text(user, text, uploads=None):
     cleaned = (text or "").strip()
+    uploads = [item for item in (uploads or []) if item]
+    if not cleaned and uploads:
+        return ingest_files(user, uploads)
     entry = Entry.objects.create(
         user=user,
         item_type=ItemType.TEXT,
@@ -133,6 +206,8 @@ def ingest_text(user, text):
     except JevError as exc:
         logger.error("Classification failed for %s: %s", entry.id, exc)
         entry.classification_error = str(exc)
+    if uploads:
+        store_attachments(user, entry, uploads)
     entry.save()
     return entry
 
@@ -148,7 +223,7 @@ def _store_upload(upload, user_id):
     return source
 
 
-def ingest_audio(user, upload, recording_duration_seconds=None, recording_group_id=None):
+def ingest_audio(user, upload, recording_duration_seconds=None, recording_group_id=None, uploads=None):
     if not isinstance(upload, UploadedFile):
         raise TranscriptionError("Missing audio upload")
     source = _store_upload(upload, user.pk)
@@ -158,7 +233,7 @@ def ingest_audio(user, upload, recording_duration_seconds=None, recording_group_
             original_duration = float(recording_duration_seconds)
         except (TypeError, ValueError):
             pass
-    processed = source.with_name(f"{source.stem}-processed{source.suffix}")
+    processed = artifacts_dir_for_user(user.pk) / f"{source.stem}-processed{source.suffix}"
     audio_for_transcript = source
     processed_duration = original_duration
     if strip_silence(source, processed):
@@ -190,9 +265,11 @@ def ingest_audio(user, upload, recording_duration_seconds=None, recording_group_
     except JevError as exc:
         logger.error("Classification failed for %s: %s", entry.id, exc)
         entry.classification_error = str(exc)
+    if uploads:
+        store_attachments(user, entry, uploads)
     entry.save()
     return entry
 
 
 def list_entries(user):
-    return Entry.objects.filter(user=user).order_by("-created_at")
+    return Entry.objects.filter(user=user).prefetch_related("attachments").order_by("-created_at")

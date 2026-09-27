@@ -7,6 +7,7 @@ from django.db import models
 class ItemType(models.TextChoices):
     AUDIO = "audio", "Audio"
     TEXT = "text", "Text"
+    FILE = "file", "File"
 
 
 class Entry(models.Model):
@@ -34,6 +35,23 @@ class Entry(models.Model):
 
     def __str__(self):
         return f"{self.user_id} {self.item_type} {self.id}"
+
+
+class Attachment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="attachments")
+    entry = models.ForeignKey(Entry, on_delete=models.CASCADE, related_name="attachments")
+    original_filename = models.CharField(max_length=255)
+    stored_name = models.CharField(max_length=255)
+    mime_type = models.CharField(max_length=120, blank=True, default="")
+    relative_path = models.CharField(max_length=500)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["uploaded_at"]
+
+    def __str__(self):
+        return f"{self.original_filename} {self.uploaded_at}"
 
 
 class UsageLog(models.Model):

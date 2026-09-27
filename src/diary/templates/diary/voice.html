@@ -15,6 +15,10 @@
     <button type="button" id="pauseBtn" disabled>Pause</button>
     <button type="button" id="stopBtn" disabled>Stop</button>
   </div>
+  {% include "diary/_attach.html" %}
+  <div class="controls">
+    <button type="button" id="saveFilesBtn" disabled>Save files</button>
+  </div>
   <p id="toast" class="toast" hidden></p>
   <pre id="result" class="result" hidden></pre>
 </main>
@@ -25,6 +29,7 @@
   document.body.setAttribute("data-swipe-text-url", "{% url 'diary:text' %}");
 </script>
 <script src="{% static 'diary/js/audio_recorder.js' %}"></script>
+<script src="{% static 'diary/js/attachments.js' %}"></script>
 <script src="{% static 'diary/js/swipe_nav.js' %}"></script>
 <script src="{% static 'diary/js/voice_page.js' %}"></script>
 {% endblock %}

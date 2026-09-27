@@ -9,10 +9,12 @@
     <a href="{% url 'accounts:logout' %}">Sign out</a>
   </header>
   {% if error %}<p class="status">{{ error }}</p>{% endif %}
-  <form method="post">
+  <form method="post" enctype="multipart/form-data" id="textForm">
     {% csrf_token %}
     <label for="text">Entry</label>
-    <textarea id="text" name="text" rows="8" required>{{ text|default:"" }}</textarea>
+    <textarea id="text" name="text" rows="8">{{ text|default:"" }}</textarea>
+    <label for="textFiles">Files</label>
+    <input id="textFiles" type="file" name="files" multiple>
     <button type="submit">Save</button>
   </form>
 </main>
