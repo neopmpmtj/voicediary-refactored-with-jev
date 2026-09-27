@@ -1,4 +1,4 @@
-> **Last updated:** 2026-09-27 15:51 WEST (Europe/Lisbon)
+> **Last updated:** 2026-09-27 16:09 WEST (Europe/Lisbon)
 > Replace with the current date and time whenever you edit this file.
 
 # Session handoff

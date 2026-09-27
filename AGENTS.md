@@ -19,6 +19,7 @@ Do not commit secrets. Sample env and credential files stay reference-only.
 **Not done**
 
 - Conference question set and the single classification call after stop.
+- Diary prior context still waits for two older rows. File-only uploads can still be sent as prior text. Both changes are decided and not built. Unknown audio duration stays out of prior context.
 - Phase two summary (conditions undefined). Phase-three backlog. Service-worker 404 left paused.
 
 **Next**
