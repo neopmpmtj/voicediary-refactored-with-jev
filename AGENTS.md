@@ -1,0 +1,7 @@
+# Voice Diary (refactored)
+
+This repo is a new Voice Diary implementation. Put new code at the repo root, outside `sample-old-version-delete-when-finished-using/`.
+
+`sample-old-version-delete-when-finished-using/` is a read-only reference for behavior and constraints. Do not copy its layout or files in as the implementation. Do not edit it unless asked.
+
+Do not commit secrets. Sample env and credential files stay reference-only.
