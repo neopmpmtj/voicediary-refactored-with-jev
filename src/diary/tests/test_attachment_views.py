@@ -39,6 +39,20 @@ def _classify_ok(_state):
     }
 
 
+def test_input_pages_include_file_controls(auth_client):
+    voice = auth_client.get("/voice/")
+    assert voice.status_code == 200
+    assert b"Attach files" in voice.content
+    assert b"Save files" in voice.content
+    text = auth_client.get("/text-input/")
+    assert text.status_code == 200
+    assert b'name="files"' in text.content
+    listing = auth_client.get("/entries/")
+    assert listing.status_code == 200
+    assert b"Upload files" in listing.content
+    assert b"Add files" in listing.content or b"No entries yet." in listing.content
+
+
 def test_text_post_with_file_links_attachment(auth_client, settings, tmp_path):
     settings.MEDIA_ROOT = tmp_path
     with patch("src.diary.services.decide", side_effect=_classify_ok):
