@@ -20,15 +20,14 @@ Do not commit secrets. Sample env and credential files stay reference-only.
 - Entries list hides an attachment whose file is gone or soft-deleted. `media_release` deletes the file and soft-deletes that row. A file-only entry is soft-deleted when it has no remaining files. Voice and text entries stay.
 - Entries cards have Delete, Edit, and Copy. Delete soft-deletes the entry and frees attached files. Edit saves `content_text` in a modal. Copy uses the clipboard.
 - URL and endpoint capture: Jev `reference` choice (`url` / `endpoint` / `none`) on the existing diary call. Matching entries also write rows in `src.urls_others`. Regex parse, no second model call.
-- Text rewrite app (`src.textrewrite`): `rewrite_text` plus `rewrite_run`. OpenAI Responses only. Usage row stores date, model, and tokens. Source and rewrite stay in memory.
-- Conference rewrite app (`src.conferencerewrite`): copy of text rewrite. `rewrite_text` plus `conference_rewrite_run`. Prompt asks for a heading on each grouped idea.
+- Phase two is rewrite. Text rewrite (`src.textrewrite`): `rewrite_text` plus `rewrite_run`. Conference rewrite (`src.conferencerewrite`): `rewrite_text` plus `conference_rewrite_run`, with a heading on each grouped idea. OpenAI Responses only. Usage row stores date, model, and tokens. Source and rewrite stay in memory.
 
 **Not done**
 
 - Interface language (`pt-pt` default, `en`). Interface language is not the backlog item Translation.
 - Conference question set and the single classification call after stop.
 - Diary prior context still waits for two older rows. File-only uploads can still be sent as prior text. Both changes are decided and not built. Unknown audio duration stays out of prior context.
-- Phase two summary (conditions undefined). Phase-three backlog. Service-worker 404 left paused.
+- Phase-three backlog. Service-worker 404 left paused.
 
 **Next**
 

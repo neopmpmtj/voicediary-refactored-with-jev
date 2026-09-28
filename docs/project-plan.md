@@ -8,7 +8,7 @@
 - [ ] Conferencing
 - [x] Visual shell
 - [ ] Interface language
-- [ ] Phase two — summary
+- [x] Phase two — rewrite (`src.textrewrite`, `src.conferencerewrite`)
 - [ ] Phase three — some of the backlog
 
 ## Phase one — input and classify
@@ -106,9 +106,12 @@ English and Portuguese (`en` and `pt-pt`). The default is `pt-pt`, matching the 
 
 This is not the backlog item Translation. That item translates diary content.
 
-## Phase two — summary
+## Phase two — rewrite
 
-After a phase-one entry is stored and classified. Run only when conditions are met. Those conditions are not defined yet. The summarizer reports input and output tokens, written to the same usage log.
+Rewrite replaces the earlier summary step. Two apps already do this work. Each is a standalone OpenAI Responses call. The source text and the rewrite stay in memory. A successful call writes a usage row (date, model, tokens).
+
+- Text rewrite (`src.textrewrite`): `rewrite_text` and `rewrite_run`. See [Text rewrite](#text-rewrite).
+- Conference rewrite (`src.conferencerewrite`): `rewrite_text` and `conference_rewrite_run`. The prompt asks for a heading on each grouped idea. See [Conference rewrite](#conference-rewrite).
 
 ## Phase three — some of the backlog
 

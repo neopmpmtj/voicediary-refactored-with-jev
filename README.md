@@ -12,8 +12,10 @@ Living notes: [`docs/handoff.md`](docs/handoff.md) (latest session) and [`docs/p
 - **Diary** (`src.diary`) — Record or type an entry. Voice supports pause/resume, microphone interruption, IndexedDB recovery, and a rollover at `RECORDER_MAX_DURATION` (default 240 seconds). Audio is trimmed, silence is stripped with ffmpeg, and OpenAI transcribes it. TypeSafe System One (Jev) classifies intent, subject, and two yes/no checks. Follow-up, reschedule, or appointment routes to calendar even if the user asked for the diary.
 - **Attachments** — Any file type. Sent with voice stop or text save, they link to that entry. Uploaded with nothing in progress, they become their own `file` entry. Files can also be added later on `/entries/`. Downloads are owner-only. User files: `media/attachments/`. Processed diary audio: `media/artifacts/`.
 - **Conference** (`src.conference`) — A separate long-recording mode at `/conference/`. One conference holds the conversation. Audio is stored as segments of at most 240 seconds under `media/conferences/<user>/<conference>/`. Each segment is transcribed as it arrives; the last shorter segment closes the conference. Diary Jev is not called. Classification questions for a finished conference are not defined yet.
+- **URLs** (`src.urls_others`) — When Jev marks a diary entry as `url` or `endpoint`, a regex writes one row per address. CLI: `url_list`.
+- **Rewrite** (phase two) — `src.textrewrite` (`rewrite_run`) and `src.conferencerewrite` (`conference_rewrite_run`). OpenAI Responses, CLI only. Source and rewrite stay in memory. The conference prompt asks for a heading on each grouped idea.
 
-There is no Stripe, quota gate, summary, translation, retrieval/chat, or Celery.
+There is no Stripe, quota gate, translation, retrieval/chat, or Celery.
 
 ## Layout
 
@@ -24,6 +26,9 @@ src/
   accounts/        Google auth and profile
   diary/           short voice/text entries, attachments, Jev
   conference/      long recordings and segments
+  urls_others/     URL and endpoint rows from diary text
+  textrewrite/     phase-two text rewrite (CLI)
+  conferencerewrite/  phase-two conference rewrite (CLI)
 docs/
   handoff.md
   project-plan.md
@@ -111,4 +116,4 @@ Set `DJANGO_SETTINGS_MODULE=src.config.settings.prod`. Prod requires `SECRET_KEY
 
 ## Not in this rewrite yet
 
-Phase two (summary, conditions undefined), conference classification after stop, and the phase-three backlog (translation, retrieval, quotas, Stripe, list/todo/finance/calendar records, Celery, and the rest). See [`docs/project-plan.md`](docs/project-plan.md).
+Conference classification after stop, interface language (`pt-pt` default, `en`), and the phase-three backlog (translation, retrieval, quotas, Stripe, list/todo/finance/calendar records, Celery, and the rest). See [`docs/project-plan.md`](docs/project-plan.md).
