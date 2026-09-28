@@ -21,11 +21,26 @@
   </div>
   {% endif %}
 
+  <label class="flex items-center gap-2 text-sm text-foreground">
+    <input type="checkbox" id="edit-enable" class="rounded border-input"
+           data-rewrite-url="{% url 'diary:rewrite' %}"
+           data-modified="{% trans 'modified' %}">
+    {% trans "Edit" %}
+  </label>
+
   <ul class="space-y-3">
     {% for entry in entries %}
-    <li class="vd-card p-4 space-y-3" data-entry-id="{{ entry.id }}">
+    <li class="vd-card p-4 space-y-3" data-entry-id="{{ entry.id }}"
+        data-updated-at="{{ entry.updated_at.isoformat }}">
       <p class="entry-content-text text-sm text-foreground whitespace-pre-wrap">{{ entry.content_text }}</p>
-      <p class="text-xs text-muted-foreground">{{ entry.created_at }} · {{ entry.item_type }} · {{ entry.route|default:"unclassified" }} · {{ entry.intent }} · {{ entry.subject }}</p>
+      <p class="entry-meta text-xs text-muted-foreground">
+        {{ entry.created_at }} · {{ entry.item_type }} · {{ entry.route|default:"unclassified" }} · {{ entry.intent }} · {{ entry.subject }}
+        {% if entry.was_modified %}
+        <span class="entry-modified"> · {% trans "modified" %} {{ entry.updated_at }}</span>
+        {% else %}
+        <span class="entry-modified hidden"></span>
+        {% endif %}
+      </p>
       {% if entry.calendar_bookings.all %}
       <ul class="space-y-1 text-xs text-muted-foreground">
         {% for booking in entry.calendar_bookings.all %}
@@ -77,7 +92,7 @@
         </form>
         <div class="flex items-center gap-2">
           <button type="button"
-                  class="vd-btn vd-btn-ghost px-3 py-1 text-xs border border-input entry-edit-btn"
+                  class="vd-btn vd-btn-ghost px-3 py-1 text-xs border border-input entry-edit-btn hidden"
                   data-edit-url="{% url 'diary:edit' entry.id %}"
                   aria-label="{% trans 'Edit entry' %}">{% trans "Edit" %}</button>
           <button type="button"
@@ -110,9 +125,25 @@
     <label for="edit-entry-content" class="block text-sm font-medium text-foreground">{% trans "Content" %}</label>
     <textarea id="edit-entry-content" name="content_text"
               class="vd-textarea w-full min-h-[140px]" rows="6"></textarea>
+    <p id="edit-entry-error" class="hidden text-sm text-destructive"></p>
+    <div class="flex flex-wrap items-center gap-2">
+      <label for="rewrite-style-select" class="sr-only">{% trans "Rewrite style" %}</label>
+      <select id="rewrite-style-select" class="vd-input py-1.5 px-2 text-sm w-auto min-w-[120px]">
+        {% for style in rewrite_styles %}
+        <option value="{{ style.id }}"{% if style.id == "grammar" %} selected{% endif %}>{{ style.label }}</option>
+        {% endfor %}
+      </select>
+      <button type="button" id="rewrite-run-btn"
+              class="vd-btn vd-btn-ghost px-3 py-1.5 text-sm border border-accent"
+              aria-label="{% trans 'Rewrite text' %}">{% trans "Rewrite" %}</button>
+      <button type="button" id="rewrite-undo-btn"
+              class="hidden vd-btn vd-btn-ghost px-3 py-1.5 text-sm border border-input"
+              aria-label="{% trans 'Undo rewrite' %}">{% trans "Undo" %}</button>
+      <div id="rewrite-spinner" class="hidden vd-spinner h-4 w-4 border-2"></div>
+    </div>
     <div class="flex items-center justify-end gap-3 pt-2">
       <button type="button" id="edit-entry-cancel" class="vd-btn vd-btn-ghost px-4 py-2">{% trans "Cancel" %}</button>
-      <button type="submit" class="vd-btn vd-btn-accent px-4 py-2">{% trans "Save" %}</button>
+      <button type="submit" id="edit-entry-save" class="vd-btn vd-btn-accent px-4 py-2" disabled>{% trans "Save" %}</button>
     </div>
   </form>
 </dialog>

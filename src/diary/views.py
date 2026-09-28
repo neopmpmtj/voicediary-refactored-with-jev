@@ -1,3 +1,4 @@
+import json
 import logging
 
 from django.contrib import messages
@@ -22,6 +23,9 @@ from src.diary.services import (
 )
 from src.diary.storage import attachment_disk_path, attachment_path_is_allowed
 from src.diary.transcription import TranscriptionError
+from src.textrewrite.config import list_styles
+from src.textrewrite.errors import RewriteError
+from src.textrewrite.services import rewrite_text
 
 logger = logging.getLogger(__name__)
 
@@ -157,7 +161,14 @@ def download_attachment(request, attachment_id):
 
 @login_required
 def entry_list(request):
-    return render(request, "diary/list.html", {"entries": list_entries(request.user)})
+    return render(
+        request,
+        "diary/list.html",
+        {
+            "entries": list_entries(request.user),
+            "rewrite_styles": list_styles(),
+        },
+    )
 
 
 @login_required
@@ -181,3 +192,21 @@ def entry_edit(request, entry_id):
         return JsonResponse(entry_payload(entry))
     messages.success(request, "Entry saved.")
     return redirect("diary:list")
+
+
+@login_required
+@require_http_methods(["POST"])
+def entry_rewrite(request):
+    try:
+        body = json.loads(request.body.decode("utf-8") or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "invalid_json", "message": "Send JSON with text and style."}, status=400)
+    if not isinstance(body, dict):
+        return JsonResponse({"error": "invalid_json", "message": "Send JSON with text and style."}, status=400)
+    text = body.get("text", "")
+    style = body.get("style")
+    try:
+        result = rewrite_text(text, style=style)
+    except RewriteError as exc:
+        return JsonResponse({"error": "rewrite_failed", "message": str(exc)}, status=400)
+    return JsonResponse({"text": result["text"], "style": result["style"]})

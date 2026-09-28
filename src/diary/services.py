@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.formats import date_format
 from decouple import config
 
 from src.diary.audio import probe_duration_seconds, strip_silence
@@ -187,6 +188,12 @@ def _finance_payload(entry):
     return records_for_entry(entry)
 
 
+def _datetime_display(value):
+    if not value:
+        return ""
+    return date_format(value, "DATETIME_FORMAT")
+
+
 def entry_payload(entry):
     return {
         "item_id": str(entry.id),
@@ -196,6 +203,9 @@ def entry_payload(entry):
         "intent": entry.intent,
         "subject": entry.subject,
         "classification_error": entry.classification_error,
+        "created_at": entry.created_at.isoformat() if entry.created_at else "",
+        "updated_at": entry.updated_at.isoformat() if entry.updated_at else "",
+        "updated_at_display": _datetime_display(entry.updated_at),
         "attachments": _attachment_payload(entry),
         "attachment_count": entry.attachments.filter(is_deleted=False).count(),
         "bookings": _booking_payload(entry),
@@ -515,7 +525,7 @@ def create_entry_for_email(email, text):
 
 def update_entry(user, entry, text):
     entry.content_text = text if text is not None else ""
-    entry.save(update_fields=["content_text"])
+    entry.save(update_fields=["content_text", "updated_at"])
     return entry
 
 

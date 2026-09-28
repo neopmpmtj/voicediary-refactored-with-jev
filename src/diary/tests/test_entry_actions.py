@@ -1,9 +1,12 @@
+import json
+from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
 
-from src.diary.models import Attachment, Entry
+from src.diary.models import Attachment, Entry, ItemType
 
 pytestmark = [pytest.mark.integration, pytest.mark.django_db]
 
@@ -35,7 +38,7 @@ def _classify_ok(_state):
     }
 
 
-def test_entries_page_includes_delete_edit_and_copy(auth_client, user):
+def test_entries_page_hides_edit_until_checkbox(auth_client, user):
     with patch("src.diary.services.decide", side_effect=_classify_ok):
         from src.diary.services import ingest_text
         ingest_text(user, "A note")
@@ -48,6 +51,14 @@ def test_entries_page_includes_delete_edit_and_copy(auth_client, user):
     assert "vd-btn-destructive" in html
     assert "entry-copy-btn" in html
     assert "edit-entry-modal" in html
+    assert "rewrite-entry-modal" not in html
+    assert 'id="edit-enable"' in html
+    assert "checked" not in html.split('id="edit-enable"', 1)[1].split(">", 1)[0]
+    assert "entry-edit-btn hidden" in html
+    assert "entry-rewrite-btn" not in html
+    assert "Grammar" in html
+    assert "Professional" in html
+    assert "/entries/rewrite/" in html
 
 
 def test_delete_post_soft_deletes_entry_and_attachment(auth_client, user, settings, tmp_path):
@@ -92,6 +103,8 @@ def test_edit_post_changes_text_and_leaves_classification(auth_client, user):
     with patch("src.diary.services.decide", side_effect=_classify_ok):
         from src.diary.services import ingest_text
         entry = ingest_text(user, "Original")
+    created = timezone.now() - timedelta(minutes=2)
+    Entry.objects.filter(pk=entry.pk).update(created_at=created, updated_at=created)
     assert entry.intent == "freeform"
     assert entry.subject == "diary"
     response = auth_client.post(
@@ -104,5 +117,63 @@ def test_edit_post_changes_text_and_leaves_classification(auth_client, user):
     assert entry.content_text == "Revised note"
     assert entry.intent == "freeform"
     assert entry.subject == "diary"
+    assert entry.updated_at > entry.created_at
+    assert entry.was_modified()
     assert b"Revised note" in response.content
     assert b"Entry saved." in response.content
+    assert b"modified" in response.content
+
+
+def test_blank_entry_still_has_hidden_edit_button(auth_client, user):
+    Entry.objects.create(user=user, item_type=ItemType.TEXT, content_text="")
+    listing = auth_client.get("/entries/")
+    assert listing.status_code == 200
+    html = listing.content.decode()
+    assert "entry-edit-btn hidden" in html
+    assert "entry-rewrite-btn" not in html
+    assert 'id="edit-enable"' in html
+
+
+def test_rewrite_preview_returns_text_and_leaves_entry(auth_client, user):
+    with patch("src.diary.services.decide", side_effect=_classify_ok):
+        from src.diary.services import ingest_text
+        entry = ingest_text(user, "Original")
+    with patch("src.diary.views.rewrite_text") as mock_rewrite:
+        mock_rewrite.return_value = {
+            "text": "Polished note",
+            "model_id": "o3-mini",
+            "style": "grammar",
+            "input_tokens": 2,
+            "output_tokens": 1,
+        }
+        response = auth_client.post(
+            "/entries/rewrite/",
+            data=json.dumps({"text": "Original", "style": "grammar"}),
+            content_type="application/json",
+        )
+    assert response.status_code == 200
+    assert response.json() == {"text": "Polished note", "style": "grammar"}
+    mock_rewrite.assert_called_once_with("Original", style="grammar")
+    entry.refresh_from_db()
+    assert entry.content_text == "Original"
+    assert entry.intent == "freeform"
+    assert entry.subject == "diary"
+
+
+def test_rewrite_preview_rejects_empty_text(auth_client):
+    response = auth_client.post(
+        "/entries/rewrite/",
+        data=json.dumps({"text": "   ", "style": "grammar"}),
+        content_type="application/json",
+    )
+    assert response.status_code == 400
+    assert response.json()["error"] == "rewrite_failed"
+
+
+def test_rewrite_preview_requires_login(client):
+    response = client.post(
+        "/entries/rewrite/",
+        data=json.dumps({"text": "hello", "style": "grammar"}),
+        content_type="application/json",
+    )
+    assert response.status_code == 302

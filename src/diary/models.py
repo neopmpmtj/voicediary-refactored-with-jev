@@ -33,12 +33,18 @@ class Entry(models.Model):
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-created_at"]
 
     def __str__(self):
         return f"{self.user_id} {self.item_type} {self.id}"
+
+    def was_modified(self):
+        if not self.created_at or not self.updated_at:
+            return False
+        return (self.updated_at - self.created_at).total_seconds() >= 1
 
 
 class Attachment(models.Model):

@@ -4,7 +4,7 @@ These rules apply to the visual shell and to every screen after it ships. The lo
 
 The current templates follow this document. New screens do too.
 
-This product has fewer screens than the old app. Missing apps (chat, rewrite, quotas, billing, lists, finance, calendar) are omitted. What exists must still look and behave like the corresponding old screens.
+This product has fewer screens than the old app. Missing apps (chat, quotas, billing, lists) are omitted. What exists must still look and behave like the corresponding old screens. Rewrite is on the entries list, not on voice or text input.
 
 ## Stack
 
@@ -61,7 +61,7 @@ Recorder behavior otherwise stays as it is: rollover at 240 seconds, microphone 
 ## Left out until those features exist
 
 - Light mode and the seven accent themes
-- Rewrite, quotas, chat, billing, lists, finance, calendar
+- Quotas, chat, billing, lists
 - The theme picker
 
 ## Screens
