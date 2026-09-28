@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from src.textrewrite.models import RewriteUsage
+from src.conferencerewrite.models import RewriteUsage
 
 
 @admin.register(RewriteUsage)

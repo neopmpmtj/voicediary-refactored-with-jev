@@ -20,6 +20,8 @@ Do not commit secrets. Sample env and credential files stay reference-only.
 - Entries list hides an attachment whose file is gone or soft-deleted. `media_release` deletes the file and soft-deletes that row. A file-only entry is soft-deleted when it has no remaining files. Voice and text entries stay.
 - Entries cards have Delete, Edit, and Copy. Delete soft-deletes the entry and frees attached files. Edit saves `content_text` in a modal. Copy uses the clipboard.
 - URL and endpoint capture: Jev `reference` choice (`url` / `endpoint` / `none`) on the existing diary call. Matching entries also write rows in `src.urls_others`. Regex parse, no second model call.
+- Text rewrite app (`src.textrewrite`): `rewrite_text` plus `rewrite_run`. OpenAI Responses only. Usage row stores date, model, and tokens. Source and rewrite stay in memory.
+- Conference rewrite app (`src.conferencerewrite`): copy of text rewrite. `rewrite_text` plus `conference_rewrite_run`. Prompt asks for a heading on each grouped idea.
 
 **Not done**
 
@@ -50,3 +52,5 @@ Do not commit secrets. Sample env and credential files stay reference-only.
 - `conference_list --email <email>` (`--json`) — list conferences (no transcript). `src/conference/management/commands/conference_list.py`
 - `conference_show <id> --email <email>` (`--json`) — print joined transcript and segments. `src/conference/management/commands/conference_show.py`
 - `url_list --email <email>` (`--kind`, `--limit`, `--json`) — list URL and endpoint rows for that account. Omits rows whose entry is soft-deleted. `src/urls_others/management/commands/url_list.py`
+- `rewrite_run` (`--file`, `--model`, `--json`) — rewrite text from a file or stdin. Prints the rewritten prose. `src/textrewrite/management/commands/rewrite_run.py`
+- `conference_rewrite_run` (`--file`, `--model`, `--json`) — rewrite conference text from a file or stdin. Prints the rewritten prose with headings. `src/conferencerewrite/management/commands/conference_rewrite_run.py`

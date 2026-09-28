@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     "src.conference",
     "src.urls_others",
     "src.textrewrite",
+    "src.conferencerewrite",
 ]
 
 MIDDLEWARE = [

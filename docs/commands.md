@@ -97,3 +97,15 @@ Each command is added here when it is created.
 - **Location:** `src/urls_others/management/commands/url_list.py`
 - **Run:** `python manage.py url_list --email <email>` (`--kind`, `--limit`, `--json` optional)
 - **Does:** list URL and endpoint rows for that account, newest first. `--kind url|endpoint` subsets; `--limit N` caps the count. Omits a row whose diary entry is soft-deleted
+
+## rewrite_run
+
+- **Location:** `src/textrewrite/management/commands/rewrite_run.py`
+- **Run:** `python manage.py rewrite_run` (`--file`, `--model`, `--json` optional)
+- **Does:** rewrite text from `--file` or stdin. Prints the rewritten prose. `--json` adds model and token counts. Does not store the source or the rewrite
+
+## conference_rewrite_run
+
+- **Location:** `src/conferencerewrite/management/commands/conference_rewrite_run.py`
+- **Run:** `python manage.py conference_rewrite_run` (`--file`, `--model`, `--json` optional)
+- **Does:** rewrite conference text from `--file` or stdin. Prints the rewritten prose with headings. `--json` adds model and token counts. Does not store the source or the rewrite

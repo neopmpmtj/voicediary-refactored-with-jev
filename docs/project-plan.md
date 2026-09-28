@@ -3,6 +3,8 @@
 - [x] Phase one — input and classify
 - [x] File attachments (local, timestamped, optional link to an input)
 - [x] URL and endpoint capture (JEV `reference` choice; `src.urls_others` rows)
+- [x] Text rewrite (CLI + in-memory `rewrite_text`; Responses API)
+- [x] Conference rewrite (CLI + in-memory `rewrite_text`; headings; Responses API)
 - [ ] Conferencing
 - [x] Visual shell
 - [ ] Interface language
@@ -27,6 +29,24 @@ Usage is logged. Transcription is stored as audio minutes, because the transcrip
 ## URL and endpoint capture
 
 Jev's diary call includes a `reference` choice: `url`, `endpoint`, or `none`. The diary entry still stores the raw typed text or transcript. When the choice is `url` or `endpoint`, a regex script in `src.urls_others` writes one row per parsed address into its own table. `http(s)` addresses are `url` (including an API-looking host). `GET /v1/users` and paths starting with `/api/` or `/vN/` are `endpoint`. Leftover text is the row's note. A leftover note currently calls `start_process`, which logs a reminder; the LLM start-process call is later. Classification failure or `none` writes no reference rows. Fetching descriptions is later work; rows start as `pending`. CLI: `url_list --email` (`--json`).
+
+## Text rewrite
+
+A standalone app (`src.textrewrite`). Other functions call `rewrite_text(text, model_id=None)`. The CLI is the same function.
+
+One OpenAI Responses call. Models come from `src/textrewrite/openai_models.json` at runtime (default `o3-mini`). The instruction lives in `src/textrewrite/rewrite_prompt.txt`. The Responses caller receives a model id, the instruction, and the source text. No tools. OpenAI only.
+
+The function returns the rewritten prose, the model id, and the token counts. The source text and the rewrite are not stored. A successful call writes a `RewriteUsage` row (date, model, tokens). A failed call writes nothing and raises `RewriteError`. A missing API key is rejected before the request. A network failure is tried once more. An auth or billing refusal, and an empty reply, raise immediately.
+
+CLI: `rewrite_run` (`--file`, `--model`, `--json`). File or stdin. No `--email`.
+
+## Conference rewrite
+
+A standalone copy of text rewrite (`src.conferencerewrite`). Other functions call `rewrite_text(text, model_id=None)`. The CLI is the same function.
+
+The shape matches text rewrite: OpenAI Responses only, models from `src/conferencerewrite/openai_models.json` (default `o3-mini`), usage row on success, no stored source or rewrite. The instruction lives in `src/conferencerewrite/conference_rewrite_prompt.txt` and asks for a heading on each grouped idea.
+
+CLI: `conference_rewrite_run` (`--file`, `--model`, `--json`). File or stdin. No `--email`.
 
 ## File attachments
 
