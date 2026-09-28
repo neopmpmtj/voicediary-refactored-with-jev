@@ -26,8 +26,14 @@ Each command is added here when it is created.
 - **Run:** `python manage.py entry_update <id> --text "..."` (`--email` optional, `--json` optional)
 - **Does:** overwrite `content_text` in place. Does not reclassify
 
-## entry_delete
+## entry_create
 
-- **Location:** `src/diary/management/commands/entry_delete.py`
-- **Run:** `python manage.py entry_delete <id>` (`--email` optional, `--json` optional)
-- **Does:** soft-delete the entry and its attachments, and delete attached files. No prompt
+- **Location:** `src/diary/management/commands/entry_create.py`
+- **Run:** `python manage.py entry_create --email <email> --text "..."` (`--json` optional)
+- **Does:** create a text diary entry through the same ingest path as the typed form (classify, URL capture). Empty text is rejected
+
+## url_list
+
+- **Location:** `src/urls_others/management/commands/url_list.py`
+- **Run:** `python manage.py url_list --email <email>` (`--kind`, `--limit`, `--json` optional)
+- **Does:** list URL and endpoint rows for that account, newest first. `--kind url|endpoint` subsets; `--limit N` caps the count

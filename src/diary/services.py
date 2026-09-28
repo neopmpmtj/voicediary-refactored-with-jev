@@ -118,6 +118,7 @@ def _apply_classification(entry, payload):
     answers = payload.get("answers") or {}
     intent_answer = answers.get("intent") or {}
     subject_answer = answers.get("subject") or {}
+    reference_answer = answers.get("reference") or {}
     diary_yes, diary_probability = _noul(answers.get("user_asked_for_diary"))
     continues_yes, continues_probability = _noul(answers.get("continues_prior"))
     entry.intent = intent_answer.get("choice") or ""
@@ -128,11 +129,21 @@ def _apply_classification(entry, payload):
     entry.user_asked_for_diary_probability = diary_probability
     entry.continues_prior = continues_yes
     entry.continues_prior_probability = continues_probability
+    entry.reference = reference_answer.get("choice") or ""
+    entry.reference_confidence = reference_answer.get("confidence")
     entry.route = derive_route(entry.intent, entry.subject)
     entry.classification_error = ""
     usage = payload.get("usage") or {}
     _log_usage(entry.user, entry, "jev", "input_tokens", usage.get("input_tokens") or 0)
     _log_usage(entry.user, entry, "jev", "output_tokens", usage.get("output_tokens") or 0)
+
+
+def _record_references_if_needed(entry):
+    if entry.reference not in ("url", "endpoint"):
+        return
+    from src.urls_others.services import record_references
+
+    record_references(entry.user, entry, entry.content_text)
 
 
 def _attachment_payload(entry):
@@ -218,6 +229,7 @@ def ingest_text(user, text, uploads=None):
     )
     try:
         _apply_classification(entry, _classify(user, cleaned, exclude_id=entry.id))
+        _record_references_if_needed(entry)
     except JevError as exc:
         logger.error("Classification failed for %s: %s", entry.id, exc)
         entry.classification_error = str(exc)
@@ -277,6 +289,7 @@ def ingest_audio(user, upload, recording_duration_seconds=None, recording_group_
         _log_usage(user, entry, transcript.get("model") or "transcription", "audio_minutes", float(minutes) / 60.0)
     try:
         _apply_classification(entry, _classify(user, text, exclude_id=entry.id))
+        _record_references_if_needed(entry)
     except JevError as exc:
         logger.error("Classification failed for %s: %s", entry.id, exc)
         entry.classification_error = str(exc)
@@ -433,6 +446,14 @@ def entries_for_email(email):
 
 def show_entry(entry_id, email=None):
     return entry_show_item(get_active_entry(entry_id, email=email))
+
+
+def create_entry_for_email(email, text):
+    cleaned = (text or "").strip()
+    if not cleaned:
+        raise EntryLookupError("Missing text.")
+    user = user_by_email(email)
+    return entry_show_item(ingest_text(user, cleaned))
 
 
 def update_entry(user, entry, text):

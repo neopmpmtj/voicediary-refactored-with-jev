@@ -26,6 +26,8 @@ class Entry(models.Model):
     user_asked_for_diary_probability = models.FloatField(null=True, blank=True)
     continues_prior = models.BooleanField(default=False)
     continues_prior_probability = models.FloatField(null=True, blank=True)
+    reference = models.CharField(max_length=32, blank=True, default="")
+    reference_confidence = models.FloatField(null=True, blank=True)
     route = models.CharField(max_length=32, blank=True, default="")
     classification_error = models.TextField(blank=True, default="")
     is_deleted = models.BooleanField(default=False)

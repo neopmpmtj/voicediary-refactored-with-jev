@@ -2,6 +2,7 @@
 
 - [x] Phase one — input and classify
 - [x] File attachments (local, timestamped, optional link to an input)
+- [x] URL and endpoint capture (JEV `reference` choice; `src.urls_others` rows)
 - [ ] Conferencing
 - [x] Visual shell
 - [ ] Interface language
@@ -22,6 +23,10 @@ Decided, not built yet:
 If the intent is follow-up or reschedule, or the subject is appointment, the stored route is calendar. That wins even when the user asked for the diary. The diary answer is still stored.
 
 Usage is logged. Transcription is stored as audio minutes, because the transcription response has no token count. Jev input and output tokens are stored. There is no quota gate and no Stripe charge.
+
+## URL and endpoint capture
+
+Jev's diary call includes a `reference` choice: `url`, `endpoint`, or `none`. The diary entry still stores the raw typed text or transcript. When the choice is `url` or `endpoint`, a regex script in `src.urls_others` writes one row per parsed address into its own table. `http(s)` addresses are `url` (including an API-looking host). `GET /v1/users` and paths starting with `/api/` or `/vN/` are `endpoint`. Leftover text is the row's note. A leftover note currently calls `start_process`, which logs a reminder; the LLM start-process call is later. Classification failure or `none` writes no reference rows. Fetching descriptions is later work; rows start as `pending`. CLI: `url_list --email` (`--json`).
 
 ## File attachments
 

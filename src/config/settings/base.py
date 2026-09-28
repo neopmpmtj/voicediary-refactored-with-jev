@@ -15,6 +15,7 @@ INSTALLED_APPS = [
     "src.accounts",
     "src.diary",
     "src.conference",
+    "src.urls_others",
 ]
 
 MIDDLEWARE = [

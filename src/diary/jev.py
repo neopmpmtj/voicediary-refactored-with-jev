@@ -41,6 +41,24 @@ QUESTIONS = {
             "judged by meaning rather than by comparing clocks?"
         ),
     },
+    "reference": {
+        "type": "choice",
+        "instructions": (
+            "Does this utterance reference a web URL or an API endpoint? "
+            "Pick none when it does not."
+        ),
+        "criteria": {
+            "url": (
+                "a link to a page, video, product, or other web resource; "
+                "the usual paste of an http or https address"
+            ),
+            "endpoint": (
+                "an API route such as GET /v1/users or a path like /api/users/{id}, "
+                "not a page to open in a browser"
+            ),
+            "none": "the utterance is not referencing a URL or an API endpoint",
+        },
+    },
 }
 
 

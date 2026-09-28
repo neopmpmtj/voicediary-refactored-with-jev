@@ -8,6 +8,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 
 from src.diary.models import Entry
+from src.urls_others.models import Reference
 
 pytestmark = [pytest.mark.integration, pytest.mark.django_db]
 
@@ -106,3 +107,75 @@ def test_entry_show_with_email_rejects_another_users_id(user, django_user_model)
     out = StringIO()
     call_command("entry_list", "--email", user.email, "--json", stdout=out)
     assert json.loads(out.getvalue()) == []
+
+
+def test_entry_create_json_and_human_output(user):
+    with patch("src.diary.services.decide", side_effect=_classify_ok):
+        json_out = StringIO()
+        call_command(
+            "entry_create",
+            "--email",
+            user.email,
+            "--text",
+            "a note",
+            "--json",
+            stdout=json_out,
+        )
+    payload = json.loads(json_out.getvalue())
+    assert payload["content_text"] == "a note"
+    assert payload["item_type"] == "text"
+    assert payload["id"]
+    entry = Entry.objects.get(pk=payload["id"])
+    assert entry.user_id == user.pk
+    with patch("src.diary.services.decide", side_effect=_classify_ok):
+        plain = StringIO()
+        call_command(
+            "entry_create",
+            "--email",
+            user.email,
+            "--text",
+            "second",
+            stdout=plain,
+        )
+    line = plain.getvalue().strip()
+    assert line.endswith(" second")
+    created_id = line.split(" ", 1)[0]
+    assert Entry.objects.filter(pk=created_id, content_text="second").exists()
+
+
+def test_entry_create_unknown_email_errors(user):
+    with pytest.raises(CommandError, match="Unknown user"):
+        call_command("entry_create", "--email", "missing@example.com", "--text", "nope")
+
+
+def test_entry_create_blank_text_errors(user):
+    with pytest.raises(CommandError, match="Missing text"):
+        call_command("entry_create", "--email", user.email, "--text", "   ")
+
+
+def test_entry_create_url_plus_instruction_writes_reference(user):
+    answers = {
+        "answers": {
+            "intent": {"choice": "freeform", "confidence": 0.9},
+            "subject": {"choice": "diary", "confidence": 0.8},
+            "user_asked_for_diary": {"noul": 0.2},
+            "continues_prior": {"noul": 0.1},
+            "reference": {"choice": "url", "confidence": 0.9},
+        },
+        "usage": {"input_tokens": 2, "output_tokens": 1},
+    }
+    with patch("src.diary.services.decide", return_value=answers):
+        out = StringIO()
+        call_command(
+            "entry_create",
+            "--email",
+            user.email,
+            "--text",
+            "summarize this https://example.com",
+            "--json",
+            stdout=out,
+        )
+    payload = json.loads(out.getvalue())
+    row = Reference.objects.get(entry_id=payload["id"])
+    assert row.value == "https://example.com"
+    assert row.note == "summarize this"

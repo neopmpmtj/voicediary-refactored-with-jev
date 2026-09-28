@@ -19,6 +19,7 @@ Do not commit secrets. Sample env and credential files stay reference-only.
 - Visual shell matches the old Voice Diary chrome (Tailwind, dark, red record button, pulse). `docs/ui-rules.md`. Strings wrapped in `{% trans %}`.
 - Entries list hides an attachment whose file is gone or soft-deleted. `media_release` deletes the file and soft-deletes that row. A file-only entry is soft-deleted when it has no remaining files. Voice and text entries stay.
 - Entries cards have Delete, Edit, and Copy. Delete soft-deletes the entry and frees attached files. Edit saves `content_text` in a modal. Copy uses the clipboard.
+- URL and endpoint capture: Jev `reference` choice (`url` / `endpoint` / `none`) on the existing diary call. Matching entries also write rows in `src.urls_others`. Regex parse, no second model call.
 
 **Not done**
 
@@ -37,4 +38,6 @@ Do not commit secrets. Sample env and credential files stay reference-only.
 - `entry_list --email <email>` (`--json`) — list active entries for that account. `src/diary/management/commands/entry_list.py`
 - `entry_show <id>` (`--email`, `--json`) — print one entry's text. `src/diary/management/commands/entry_show.py`
 - `entry_update <id> --text "..."` (`--email`, `--json`) — overwrite entry text. `src/diary/management/commands/entry_update.py`
+- `entry_create --email <email> --text "..."` (`--json`) — create a text diary entry (classifies, may record URLs). `src/diary/management/commands/entry_create.py`
 - `entry_delete <id>` (`--email`, `--json`) — soft-delete an entry and free attached files. No prompt. `src/diary/management/commands/entry_delete.py`
+- `url_list --email <email>` (`--kind`, `--limit`, `--json`) — list URL and endpoint rows for that account. `src/urls_others/management/commands/url_list.py`

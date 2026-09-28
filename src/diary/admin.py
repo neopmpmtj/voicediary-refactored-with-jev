@@ -5,7 +5,7 @@ from src.diary.models import Attachment, Entry, UsageLog
 
 @admin.register(Entry)
 class EntryAdmin(admin.ModelAdmin):
-    list_display = ("created_at", "user", "item_type", "route", "intent", "subject")
+    list_display = ("created_at", "user", "item_type", "route", "intent", "subject", "reference")
     list_filter = ("item_type", "route")
 
 
