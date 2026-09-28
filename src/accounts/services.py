@@ -8,6 +8,17 @@ from src.accounts.models import User, UserSecret
 logger = logging.getLogger(__name__)
 
 
+def account_list_item(user):
+    return {
+        "email": user.email,
+        "is_google_account": user.is_google_account,
+    }
+
+
+def accounts_list():
+    return [account_list_item(row) for row in User.objects.order_by("email")]
+
+
 def store_user_tokens(user, access_token, refresh_token, expires_in, scopes):
     secret, _created = UserSecret.objects.get_or_create(user=user)
     secret.encrypted_google_access_token = encrypt_value(access_token)

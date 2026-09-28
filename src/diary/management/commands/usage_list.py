@@ -3,8 +3,7 @@ import json
 
 from django.core.management.base import BaseCommand, CommandError
 
-from src.diary.models import ItemType
-from src.diary.services import EntryLookupError, entries_for_email
+from src.diary.services import EntryLookupError, usage_for_email
 
 
 def _positive_int(value):
@@ -15,19 +14,11 @@ def _positive_int(value):
 
 
 class Command(BaseCommand):
-    help = "List active diary entries for a user."
+    help = "List usage log rows for a user."
 
     def add_arguments(self, parser):
         parser.add_argument("--email", required=True, help="Account email.")
-        parser.add_argument("--q", help="Substring match on content_text.")
-        parser.add_argument("--intent", help="Only this intent.")
-        parser.add_argument("--subject", help="Only this subject.")
-        parser.add_argument("--route", help="Only this route.")
-        parser.add_argument(
-            "--item-type",
-            choices=ItemType.values,
-            help="Only this item type.",
-        )
+        parser.add_argument("--entry", help="Only rows for this entry UUID.")
         parser.add_argument(
             "--limit",
             type=_positive_int,
@@ -37,13 +28,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            rows = entries_for_email(
+            rows = usage_for_email(
                 options["email"],
-                q=options["q"],
-                intent=options["intent"],
-                subject=options["subject"],
-                route=options["route"],
-                item_type=options["item_type"],
+                entry_id=options.get("entry"),
                 limit=options["limit"],
             )
         except EntryLookupError as exc:
@@ -52,9 +39,9 @@ class Command(BaseCommand):
             self.stdout.write(json.dumps(rows))
             return
         if not rows:
-            self.stdout.write("no entries")
+            self.stdout.write("no usage")
             return
         for item in rows:
             self.stdout.write(
-                f"{item['id']} {item['item_type']} {item['created_at']} {item['content_text']}"
+                f"{item['created_at']} {item['service']} {item['usage_type']} {item['amount']} {item['entry_id']}"
             )

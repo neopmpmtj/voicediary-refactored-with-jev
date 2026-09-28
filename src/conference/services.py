@@ -4,6 +4,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import UploadedFile
 from django.db import IntegrityError, transaction
 from django.db.models import Prefetch
@@ -18,6 +19,10 @@ logger = logging.getLogger(__name__)
 
 
 class ConferenceError(Exception):
+    pass
+
+
+class ConferenceLookupError(Exception):
     pass
 
 
@@ -173,3 +178,52 @@ def conference_payload(conference):
         "total_duration_seconds": conference.total_duration_seconds,
         "segment_count": conference.segments.filter(is_deleted=False).count(),
     }
+
+
+def user_by_email(email):
+    User = get_user_model()
+    try:
+        return User.objects.get(email=email)
+    except User.DoesNotExist as exc:
+        raise ConferenceLookupError("Unknown user.") from exc
+
+
+def conference_list_item(conference):
+    return {
+        "id": str(conference.id),
+        "status": conference.status,
+        "started_at": conference.started_at.isoformat(),
+        "ended_at": conference.ended_at.isoformat() if conference.ended_at else None,
+        "total_duration_seconds": conference.total_duration_seconds,
+        "segment_count": conference.segments.filter(is_deleted=False).count(),
+    }
+
+
+def conferences_for_email(email):
+    user = user_by_email(email)
+    return [conference_list_item(conference) for conference in list_conferences(user)]
+
+
+def conference_show_item(conference):
+    data = conference_list_item(conference)
+    data["content_text"] = conference.content_text
+    data["segments"] = [
+        {
+            "sequence": segment.sequence,
+            "content_text": segment.content_text,
+            "transcription_error": segment.transcription_error,
+            "recording_duration_seconds": segment.recording_duration_seconds,
+            "processed_duration_seconds": segment.processed_duration_seconds,
+        }
+        for segment in conference.segments.filter(is_deleted=False).order_by("sequence")
+    ]
+    return data
+
+
+def show_conference_for_email(conference_id, email):
+    user = user_by_email(email)
+    try:
+        conference = conference_for_user(user, conference_id)
+    except ConferenceError as exc:
+        raise ConferenceLookupError(str(exc)) from exc
+    return conference_show_item(conference)

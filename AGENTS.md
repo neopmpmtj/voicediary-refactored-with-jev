@@ -35,9 +35,18 @@ Do not commit secrets. Sample env and credential files stay reference-only.
 ## Commands
 
 - `media_release <path>` (`--json`) — delete a file under `media/`, then soft-delete the row that stored the path. `src/diary/management/commands/media_release.py`
-- `entry_list --email <email>` (`--json`) — list active entries for that account. `src/diary/management/commands/entry_list.py`
+- `account_list` (`--json`) — list accounts (email and Google-account flag only). `src/accounts/management/commands/account_list.py`
+- `entry_list --email <email>` (`--q`, `--intent`, `--subject`, `--route`, `--item-type`, `--limit`, `--json`) — list active entries for that account. `src/diary/management/commands/entry_list.py`
 - `entry_show <id>` (`--email`, `--json`) — print one entry's text. `src/diary/management/commands/entry_show.py`
 - `entry_update <id> --text "..."` (`--email`, `--json`) — overwrite entry text. `src/diary/management/commands/entry_update.py`
 - `entry_create --email <email> --text "..."` (`--json`) — create a text diary entry (classifies, may record URLs). `src/diary/management/commands/entry_create.py`
 - `entry_delete <id>` (`--email`, `--json`) — soft-delete an entry and free attached files. No prompt. `src/diary/management/commands/entry_delete.py`
-- `url_list --email <email>` (`--kind`, `--limit`, `--json`) — list URL and endpoint rows for that account. `src/urls_others/management/commands/url_list.py`
+- `entry_delete_last --email <email>` (`--json`) — soft-delete the newest active entry; leave attached files in place. `src/diary/management/commands/entry_delete_last.py`
+- `entry_restore --email <email>` (`--id`, `--json`) — restore a soft-deleted entry. Default is the newest deleted row. `src/diary/management/commands/entry_restore.py`
+- `entry_audio <path> --email <email>` (`--json`) — ingest one local audio file through the diary recorder path. `src/diary/management/commands/entry_audio.py`
+- `attachment_list --email <email>` (`--entry`, `--json`) — list active attachments including `relative_path`. `src/diary/management/commands/attachment_list.py`
+- `attachment_add <path> --email <email>` (`--entry`, `--json`) — store a local file; `--entry` links it, otherwise creates a file entry. `src/diary/management/commands/attachment_add.py`
+- `usage_list --email <email>` (`--entry`, `--limit`, `--json`) — list usage log rows for that account. `src/diary/management/commands/usage_list.py`
+- `conference_list --email <email>` (`--json`) — list conferences (no transcript). `src/conference/management/commands/conference_list.py`
+- `conference_show <id> --email <email>` (`--json`) — print joined transcript and segments. `src/conference/management/commands/conference_show.py`
+- `url_list --email <email>` (`--kind`, `--limit`, `--json`) — list URL and endpoint rows for that account. Omits rows whose entry is soft-deleted. `src/urls_others/management/commands/url_list.py`

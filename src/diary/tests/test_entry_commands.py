@@ -153,6 +153,94 @@ def test_entry_create_blank_text_errors(user):
         call_command("entry_create", "--email", user.email, "--text", "   ")
 
 
+def test_entry_list_filters_and_limit(user):
+    with patch("src.diary.services.decide", side_effect=_classify_ok):
+        from src.diary.services import ingest_text
+        ingest_text(user, "alpha note")
+        later = ingest_text(user, "beta note")
+    later.intent = "todo"
+    later.subject = "finance"
+    later.route = "finance"
+    later.save(update_fields=["intent", "subject", "route"])
+    q_out = StringIO()
+    call_command("entry_list", "--email", user.email, "--q", "beta", "--json", stdout=q_out)
+    q_rows = json.loads(q_out.getvalue())
+    assert [item["content_text"] for item in q_rows] == ["beta note"]
+    intent_out = StringIO()
+    call_command("entry_list", "--email", user.email, "--intent", "todo", "--json", stdout=intent_out)
+    assert [item["id"] for item in json.loads(intent_out.getvalue())] == [str(later.id)]
+    type_out = StringIO()
+    call_command("entry_list", "--email", user.email, "--item-type", "text", "--limit", "1", "--json", stdout=type_out)
+    type_rows = json.loads(type_out.getvalue())
+    assert len(type_rows) == 1
+    assert type_rows[0]["content_text"] == "beta note"
+
+
+def test_entry_delete_last_leaves_files_and_restore_brings_them_back(user, settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+    from src.diary.services import ingest_files
+
+    older = ingest_files(user, [_pdf("older.pdf")])
+    newest = ingest_files(user, [_pdf("newest.pdf")])
+    attachment = newest.attachments.get()
+    path = tmp_path / attachment.relative_path
+    out = StringIO()
+    call_command("entry_delete_last", "--email", user.email, "--json", stdout=out)
+    payload = json.loads(out.getvalue())
+    assert payload["id"] == str(newest.id)
+    newest.refresh_from_db()
+    attachment.refresh_from_db()
+    assert newest.is_deleted is True
+    assert attachment.is_deleted is False
+    assert path.exists()
+    list_out = StringIO()
+    call_command("entry_list", "--email", user.email, "--json", stdout=list_out)
+    ids = [item["id"] for item in json.loads(list_out.getvalue())]
+    assert str(newest.id) not in ids
+    assert str(older.id) in ids
+    restore_out = StringIO()
+    call_command("entry_restore", "--email", user.email, "--json", stdout=restore_out)
+    restored = json.loads(restore_out.getvalue())
+    assert restored["id"] == str(newest.id)
+    assert restored["attachment_count"] == 1
+    newest.refresh_from_db()
+    assert newest.is_deleted is False
+    assert path.exists()
+
+
+def test_entry_restore_by_id_after_entry_delete_returns_text_without_files(user, settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+    from src.diary.services import ingest_files
+
+    entry = ingest_files(user, [_pdf("gone.pdf")])
+    attachment = entry.attachments.get()
+    path = tmp_path / attachment.relative_path
+    call_command("entry_delete", str(entry.id))
+    assert not path.exists()
+    out = StringIO()
+    call_command("entry_restore", "--email", user.email, "--id", str(entry.id), "--json", stdout=out)
+    payload = json.loads(out.getvalue())
+    assert payload["id"] == str(entry.id)
+    assert payload["attachment_count"] == 0
+    entry.refresh_from_db()
+    assert entry.is_deleted is False
+    attachment.refresh_from_db()
+    assert attachment.is_deleted is True
+
+
+def test_entry_restore_active_id_errors(user):
+    with patch("src.diary.services.decide", side_effect=_classify_ok):
+        from src.diary.services import ingest_text
+        entry = ingest_text(user, "still here")
+    with pytest.raises(CommandError, match="Unknown entry"):
+        call_command("entry_restore", "--email", user.email, "--id", str(entry.id))
+
+
+def test_entry_delete_last_empty(user):
+    with pytest.raises(CommandError, match="Unknown entry"):
+        call_command("entry_delete_last", "--email", user.email)
+
+
 def test_entry_create_url_plus_instruction_writes_reference(user):
     answers = {
         "answers": {

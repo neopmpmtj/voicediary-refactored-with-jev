@@ -63,7 +63,7 @@ def user_by_email(email):
 
 def references_for_email(email, *, kind=None, limit=None):
     user = user_by_email(email)
-    rows = Reference.objects.filter(user=user)
+    rows = Reference.objects.filter(user=user, entry__is_deleted=False)
     if kind:
         rows = rows.filter(kind=kind)
     rows = rows.order_by("-created_at")

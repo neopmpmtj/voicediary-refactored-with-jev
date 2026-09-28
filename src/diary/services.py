@@ -1,11 +1,12 @@
 import logging
+import mimetypes
 import uuid
 from decimal import Decimal
 from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.files.uploadedfile import UploadedFile
+from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.db.models import Q
 from django.utils import timezone
 from decouple import config
@@ -434,13 +435,34 @@ def get_active_entry(entry_id, email=None):
     return entry
 
 
-def entries_for_email(email):
+def entries_for_email(
+    email,
+    *,
+    q=None,
+    intent=None,
+    subject=None,
+    route=None,
+    item_type=None,
+    limit=None,
+):
     user = user_by_email(email)
     rows = (
         Entry.objects.filter(user=user, is_deleted=False)
         .prefetch_related("attachments")
         .order_by("-created_at")
     )
+    if q:
+        rows = rows.filter(content_text__icontains=q)
+    if intent:
+        rows = rows.filter(intent=intent)
+    if subject:
+        rows = rows.filter(subject=subject)
+    if route:
+        rows = rows.filter(route=route)
+    if item_type:
+        rows = rows.filter(item_type=item_type)
+    if limit is not None:
+        rows = rows[:limit]
     return [entry_list_item(entry) for entry in rows]
 
 
@@ -487,3 +509,103 @@ def delete_entry(user, entry):
 def delete_entry_by_id(entry_id, email=None):
     entry = get_active_entry(entry_id, email=email)
     return delete_entry(entry.user, entry)
+
+
+def file_upload_from_path(path):
+    source = Path(path).expanduser()
+    if not source.is_file():
+        raise EntryLookupError("Unknown file.")
+    mime = mimetypes.guess_type(source.name)[0] or "application/octet-stream"
+    return SimpleUploadedFile(source.name, source.read_bytes(), content_type=mime)
+
+
+def attachment_list_item(item):
+    return {
+        "id": str(item.id),
+        "entry_id": str(item.entry_id),
+        "original_filename": item.original_filename,
+        "mime_type": item.mime_type,
+        "relative_path": item.relative_path,
+        "uploaded_at": item.uploaded_at.isoformat(),
+    }
+
+
+def attachments_for_email(email, entry_id=None):
+    user = user_by_email(email)
+    rows = Attachment.objects.filter(user=user, is_deleted=False)
+    if entry_id:
+        entry = get_active_entry(entry_id, email=email)
+        rows = rows.filter(entry=entry)
+    rows = rows.order_by("-uploaded_at")
+    return [attachment_list_item(item) for item in rows]
+
+
+def add_attachment_from_path(email, path, entry_id=None):
+    user = user_by_email(email)
+    upload = file_upload_from_path(path)
+    if entry_id:
+        entry = get_active_entry(entry_id, email=email)
+        store_attachments(user, entry, [upload])
+        return entry_show_item(get_active_entry(entry.id, email=email))
+    return entry_show_item(ingest_files(user, [upload]))
+
+
+def create_audio_entry_from_path(email, path):
+    user = user_by_email(email)
+    upload = file_upload_from_path(path)
+    return entry_show_item(ingest_audio(user, upload))
+
+
+def usage_list_item(row):
+    return {
+        "service": row.service,
+        "usage_type": row.usage_type,
+        "amount": str(row.amount),
+        "created_at": row.created_at.isoformat(),
+        "entry_id": str(row.entry_id) if row.entry_id else None,
+    }
+
+
+def usage_for_email(email, entry_id=None, limit=None):
+    user = user_by_email(email)
+    rows = UsageLog.objects.filter(user=user)
+    if entry_id:
+        key = _entry_uuid(entry_id)
+        if not Entry.objects.filter(pk=key, user=user).exists():
+            raise EntryLookupError("Unknown entry.")
+        rows = rows.filter(entry_id=key)
+    rows = rows.order_by("-created_at")
+    if limit is not None:
+        rows = rows[:limit]
+    return [usage_list_item(row) for row in rows]
+
+
+def delete_last_entry_for_email(email):
+    user = user_by_email(email)
+    entry = (
+        Entry.objects.filter(user=user, is_deleted=False)
+        .order_by("-created_at")
+        .first()
+    )
+    if entry is None:
+        raise EntryLookupError("Unknown entry.")
+    _soft_delete(entry, timezone.now())
+    return {"id": str(entry.id)}
+
+
+def restore_entry_for_email(email, entry_id=None):
+    user = user_by_email(email)
+    rows = Entry.objects.filter(user=user, is_deleted=True).prefetch_related("attachments")
+    if entry_id:
+        key = _entry_uuid(entry_id)
+        entry = rows.filter(pk=key).first()
+        if entry is None:
+            raise EntryLookupError("Unknown entry.")
+    else:
+        entry = rows.order_by("-deleted_at", "-created_at").first()
+        if entry is None:
+            raise EntryLookupError("Unknown entry.")
+    entry.is_deleted = False
+    entry.deleted_at = None
+    entry.save(update_fields=["is_deleted", "deleted_at"])
+    return entry_show_item(entry)

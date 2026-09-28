@@ -139,3 +139,22 @@ def test_url_list_kind_and_limit_together(user):
 def test_url_list_rejects_unknown_kind(user):
     with pytest.raises(CommandError):
         call_command("url_list", "--email", user.email, "--kind", "bogus")
+
+
+def test_url_list_omits_rows_of_soft_deleted_entries_and_restore_shows_them(user, monkeypatch):
+    monkeypatch.setattr("src.diary.services.decide", lambda state: _answers("url"))
+    from src.diary.services import ingest_text
+
+    entry = ingest_text(user, "keep https://example.com")
+    call_command("entry_delete_last", "--email", user.email)
+    hidden = StringIO()
+    call_command("url_list", "--email", user.email, "--json", stdout=hidden)
+    assert json.loads(hidden.getvalue()) == []
+    assert Reference.objects.filter(entry=entry).exists()
+    call_command("entry_restore", "--email", user.email)
+    shown = StringIO()
+    call_command("url_list", "--email", user.email, "--json", stdout=shown)
+    payload = json.loads(shown.getvalue())
+    assert len(payload) == 1
+    assert payload[0]["value"] == "https://example.com"
+    assert payload[0]["entry_id"] == str(entry.id)
