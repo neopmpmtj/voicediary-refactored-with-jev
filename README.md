@@ -13,7 +13,7 @@ Living notes: [`docs/handoff.md`](docs/handoff.md) (latest session) and [`docs/p
 - **Attachments** — Any file type. Sent with voice stop or text save, they link to that entry. Uploaded with nothing in progress, they become their own `file` entry. Files can also be added later on `/entries/`. Downloads are owner-only. User files: `media/attachments/`. Processed diary audio: `media/artifacts/`.
 - **Conference** (`src.conference`) — A separate long-recording mode at `/conference/`. One conference holds the conversation. Audio is stored as segments of at most 240 seconds under `media/conferences/<user>/<conference>/`. Each segment is transcribed as it arrives; the last shorter segment closes the conference. Diary Jev is not called. Classification questions for a finished conference are not defined yet.
 - **URLs** (`src.urls_others`) — When Jev marks a diary entry as `url` or `endpoint`, a regex writes one row per address. CLI: `url_list`.
-- **Rewrite** (phase two) — `src.textrewrite` (`rewrite_run`) and `src.conferencerewrite` (`conference_rewrite_run`). OpenAI Responses, CLI only. Source and rewrite stay in memory. The conference prompt asks for a heading on each grouped idea.
+- **Rewrite** (phase two) — `src.textrewrite` (`rewrite_run --style`) and `src.conferencerewrite` (`conference_rewrite_run`). OpenAI Responses, CLI only. Source and rewrite stay in memory. Text rewrite styles: grammar (default), professional, casual, llm-friendly, story, fairy-tale. The conference prompt asks for a heading on each grouped idea.
 
 There is no Stripe, quota gate, translation, retrieval/chat, or Celery.
 

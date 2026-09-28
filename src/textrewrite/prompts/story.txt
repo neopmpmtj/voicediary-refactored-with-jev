@@ -1,0 +1,3 @@
+Respond in the same language as the input. Do not translate; preserve the language of the input.
+
+Write a short fictional story with the inputted text.

@@ -6,6 +6,7 @@ from django.db import models
 class RewriteUsage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     model_id = models.CharField(max_length=64)
+    style = models.CharField(max_length=32, default="grammar")
     input_tokens = models.PositiveIntegerField()
     output_tokens = models.PositiveIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)

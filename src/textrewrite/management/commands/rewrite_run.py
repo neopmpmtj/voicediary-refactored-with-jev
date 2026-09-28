@@ -4,6 +4,7 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
+from src.textrewrite.config import DEFAULT_STYLE, list_styles
 from src.textrewrite.errors import RewriteError
 from src.textrewrite.services import rewrite_text
 
@@ -14,11 +15,21 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--file", help="Path to the text to rewrite.")
         parser.add_argument("--model", help="Responses model id from the catalog.")
+        parser.add_argument(
+            "--style",
+            choices=[item["id"] for item in list_styles()],
+            default=DEFAULT_STYLE,
+            help="Rewrite style. Default grammar.",
+        )
         parser.add_argument("--json", action="store_true", help="Print the result as JSON.")
 
     def handle(self, *args, **options):
         try:
-            result = rewrite_text(self._read_text(options.get("file")), model_id=options.get("model"))
+            result = rewrite_text(
+                self._read_text(options.get("file")),
+                model_id=options.get("model"),
+                style=options.get("style"),
+            )
         except RewriteError as exc:
             raise CommandError(str(exc)) from exc
         if options["json"]:

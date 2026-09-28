@@ -1,0 +1,3 @@
+Respond in the same language as the input. Do not translate; preserve the language of the input.
+
+Convert the following text to a more LLM-friendly format. Make it suitable for an assistant coding LLM input.

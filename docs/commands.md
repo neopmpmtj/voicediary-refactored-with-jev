@@ -101,8 +101,8 @@ Each command is added here when it is created.
 ## rewrite_run
 
 - **Location:** `src/textrewrite/management/commands/rewrite_run.py`
-- **Run:** `python manage.py rewrite_run` (`--file`, `--model`, `--json` optional)
-- **Does:** rewrite text from `--file` or stdin. Prints the rewritten prose. `--json` adds model and token counts. Does not store the source or the rewrite
+- **Run:** `python manage.py rewrite_run` (`--file`, `--model`, `--style`, `--json` optional)
+- **Does:** rewrite text from `--file` or stdin. `--style` is `grammar` (default), `professional`, `casual`, `llm-friendly`, `story`, or `fairy-tale`. Prints the rewritten prose. `--json` adds model, style, and token counts. Does not store the source or the rewrite
 
 ## conference_rewrite_run
 

@@ -1,0 +1,3 @@
+Respond in the same language as the input. Do not translate; preserve the language of the input.
+
+Convert the following text to a more casual, friendly tone while keeping the main points. Make it sound conversational and approachable.

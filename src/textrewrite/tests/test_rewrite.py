@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 from openai import APIConnectionError, AuthenticationError
 
+from src.textrewrite.config import load_prompt
 from src.textrewrite.errors import RewriteError
 from src.textrewrite.models import RewriteUsage
 from src.textrewrite.services import rewrite_text
@@ -40,6 +41,7 @@ def test_rewrite_text_returns_rewrite_and_writes_usage(monkeypatch):
     assert result == {
         "text": "Grouped idea.",
         "model_id": "o3-mini",
+        "style": "grammar",
         "input_tokens": 10,
         "output_tokens": 4,
     }
@@ -47,6 +49,7 @@ def test_rewrite_text_returns_rewrite_and_writes_usage(monkeypatch):
     assert "raw source that must not be stored" not in result.values()
     row = RewriteUsage.objects.get()
     assert row.model_id == "o3-mini"
+    assert row.style == "grammar"
     assert row.input_tokens == 10
     assert row.output_tokens == 4
 
@@ -88,3 +91,45 @@ def test_network_failure_retries_then_writes_usage(monkeypatch):
     assert result["text"] == "Grouped idea."
     assert mock_request.call_count == 2
     assert RewriteUsage.objects.count() == 1
+    assert RewriteUsage.objects.get().style == "grammar"
+
+
+def test_unknown_style_writes_no_row(monkeypatch):
+    mock_request = MagicMock()
+    monkeypatch.setattr("src.textrewrite.responses.config", lambda *args, **kwargs: "sk-test")
+    monkeypatch.setattr("src.textrewrite.responses._request_rewrite", mock_request)
+    with pytest.raises(RewriteError, match="Unknown style"):
+        rewrite_text("hello", style="bogus")
+    mock_request.assert_not_called()
+    assert RewriteUsage.objects.count() == 0
+
+
+def test_named_style_is_the_instruction_sent(monkeypatch):
+    captured = {}
+
+    def fake_request(client, model_id, instructions, text):
+        captured["instructions"] = instructions
+        captured["text"] = text
+        return _response("Rewritten.")
+
+    monkeypatch.setattr("src.textrewrite.responses.config", lambda *args, **kwargs: "sk-test")
+    monkeypatch.setattr("src.textrewrite.responses._request_rewrite", fake_request)
+    result = rewrite_text("hello", style="professional")
+    assert captured["instructions"] == load_prompt("professional")
+    assert captured["text"] == "hello"
+    assert result["style"] == "professional"
+    assert RewriteUsage.objects.get().style == "professional"
+
+
+def test_default_call_uses_grammar_prompt(monkeypatch):
+    captured = {}
+
+    def fake_request(client, model_id, instructions, text):
+        captured["instructions"] = instructions
+        return _response("Grouped idea.")
+
+    monkeypatch.setattr("src.textrewrite.responses.config", lambda *args, **kwargs: "sk-test")
+    monkeypatch.setattr("src.textrewrite.responses._request_rewrite", fake_request)
+    result = rewrite_text("hello")
+    assert captured["instructions"] == load_prompt("grammar")
+    assert result["style"] == "grammar"

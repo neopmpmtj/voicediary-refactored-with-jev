@@ -3,7 +3,7 @@
 - [x] Phase one — input and classify
 - [x] File attachments (local, timestamped, optional link to an input)
 - [x] URL and endpoint capture (JEV `reference` choice; `src.urls_others` rows)
-- [x] Text rewrite (CLI + in-memory `rewrite_text`; Responses API)
+- [x] Text rewrite (CLI + in-memory `rewrite_text`; six styles; Responses API)
 - [x] Conference rewrite (CLI + in-memory `rewrite_text`; headings; Responses API)
 - [ ] Conferencing
 - [x] Visual shell
@@ -32,13 +32,13 @@ Jev's diary call includes a `reference` choice: `url`, `endpoint`, or `none`. Th
 
 ## Text rewrite
 
-A standalone app (`src.textrewrite`). Other functions call `rewrite_text(text, model_id=None)`. The CLI is the same function.
+A standalone app (`src.textrewrite`). Other functions call `rewrite_text(text, model_id=None, style=None)`. The CLI is the same function.
 
-One OpenAI Responses call. Models come from `src/textrewrite/openai_models.json` at runtime (default `o3-mini`). The instruction lives in `src/textrewrite/rewrite_prompt.txt`. The Responses caller receives a model id, the instruction, and the source text. No tools. OpenAI only.
+One OpenAI Responses call. Models come from `src/textrewrite/openai_models.json` at runtime (default `o3-mini`). The style selects the instruction from `src/textrewrite/prompts/` (`grammar`, `professional`, `casual`, `llm-friendly`, `story`, `fairy-tale`). Default is `grammar`. The Responses caller receives a model id, the instruction, and the source text. No tools. OpenAI only.
 
-The function returns the rewritten prose, the model id, and the token counts. The source text and the rewrite are not stored. A successful call writes a `RewriteUsage` row (date, model, tokens). A failed call writes nothing and raises `RewriteError`. A missing API key is rejected before the request. A network failure is tried once more. An auth or billing refusal, and an empty reply, raise immediately.
+The function returns the rewritten prose, the model id, the style, and the token counts. The source text and the rewrite are not stored. A successful call writes a `RewriteUsage` row (date, model, style, tokens). A failed call writes nothing and raises `RewriteError`. A missing API key is rejected before the request. A network failure is tried once more. An auth or billing refusal, and an empty reply, raise immediately.
 
-CLI: `rewrite_run` (`--file`, `--model`, `--json`). File or stdin. No `--email`.
+CLI: `rewrite_run` (`--file`, `--model`, `--style`, `--json`). File or stdin. `--style` default `grammar`. No `--email`.
 
 ## Conference rewrite
 
@@ -108,9 +108,9 @@ This is not the backlog item Translation. That item translates diary content.
 
 ## Phase two — rewrite
 
-Rewrite replaces the earlier summary step. Two apps already do this work. Each is a standalone OpenAI Responses call. The source text and the rewrite stay in memory. A successful call writes a usage row (date, model, tokens).
+Rewrite replaces the earlier summary step. Two apps already do this work. Each is a standalone OpenAI Responses call. The source text and the rewrite stay in memory. A successful call writes a usage row (date, model, tokens). Text rewrite also stores the style.
 
-- Text rewrite (`src.textrewrite`): `rewrite_text` and `rewrite_run`. See [Text rewrite](#text-rewrite).
+- Text rewrite (`src.textrewrite`): `rewrite_text` and `rewrite_run`. Six styles (`grammar` default). See [Text rewrite](#text-rewrite).
 - Conference rewrite (`src.conferencerewrite`): `rewrite_text` and `conference_rewrite_run`. The prompt asks for a heading on each grouped idea. See [Conference rewrite](#conference-rewrite).
 
 ## Phase three — some of the backlog
