@@ -98,6 +98,12 @@ Each command is added here when it is created.
 - **Run:** `python manage.py url_list --email <email>` (`--kind`, `--limit`, `--json` optional)
 - **Does:** list URL and endpoint rows for that account, newest first. `--kind url|endpoint` subsets; `--limit N` caps the count. Omits a row whose diary entry is soft-deleted
 
+## calendar_list
+
+- **Location:** `src/batchcalendar/management/commands/calendar_list.py`
+- **Run:** `python manage.py calendar_list --email <email>` (`--entry`, `--json` optional)
+- **Does:** list calendar bookings for that account, newest first. `--entry` subsets to one diary entry. Omits a row whose diary entry is soft-deleted
+
 ## rewrite_run
 
 - **Location:** `src/textrewrite/management/commands/rewrite_run.py`

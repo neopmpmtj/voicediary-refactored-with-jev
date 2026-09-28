@@ -26,6 +26,16 @@
     <li class="vd-card p-4 space-y-3" data-entry-id="{{ entry.id }}">
       <p class="entry-content-text text-sm text-foreground whitespace-pre-wrap">{{ entry.content_text }}</p>
       <p class="text-xs text-muted-foreground">{{ entry.created_at }} · {{ entry.item_type }} · {{ entry.route|default:"unclassified" }} · {{ entry.intent }} · {{ entry.subject }}</p>
+      {% if entry.calendar_bookings.all %}
+      <ul class="space-y-1 text-xs text-muted-foreground">
+        {% for booking in entry.calendar_bookings.all %}
+        <li>
+          {{ booking.summary|default:"calendar" }} · {{ booking.status }}
+          {% if booking.problem %} · {{ booking.problem }}{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
       {% if entry.present_attachments %}
       <ul class="space-y-1 text-sm">
         {% for file in entry.present_attachments %}

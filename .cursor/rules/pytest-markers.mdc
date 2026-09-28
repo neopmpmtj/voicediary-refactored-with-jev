@@ -45,6 +45,8 @@ pytest -m integration
 pytest
 ```
 
+`--reuse-db` is on in [`pytest.ini`](pytest.ini) (Django `--keepdb`). Recreate a stale test schema with `pytest --create-db`.
+
 ## Checklist for new/changed tests
 
 - [ ] Exactly one of `unit` or `integration` on every `test_*`

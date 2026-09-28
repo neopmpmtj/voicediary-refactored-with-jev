@@ -70,6 +70,15 @@
     if (data.classification_error) {
       line += "\nClassification failed.";
     }
+    if (data.bookings && data.bookings.length) {
+      data.bookings.forEach(function (booking) {
+        var part = booking.summary || "calendar";
+        line += "\n" + part + " " + booking.status;
+        if (booking.problem) {
+          line += ": " + booking.problem;
+        }
+      });
+    }
     if (data.attachment_count) {
       line += "\n" + data.attachment_count + " file(s) attached.";
     }

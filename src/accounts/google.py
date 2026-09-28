@@ -91,6 +91,27 @@ def get_google_user_info(access_token):
         raise GoogleAuthError(str(exc)) from exc
 
 
+def refresh_access_token(refresh_token):
+    token_data = urlencode({
+        "client_id": config("GOOGLE_CLIENT_ID"),
+        "client_secret": config("GOOGLE_CLIENT_SECRET"),
+        "refresh_token": refresh_token,
+        "grant_type": "refresh_token",
+    }).encode("utf-8")
+    req = Request(GOOGLE_TOKEN_URI, data=token_data, method="POST")
+    req.add_header("Content-Type", "application/x-www-form-urlencoded")
+    try:
+        with urlopen(req, timeout=30) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except HTTPError as exc:
+        body = exc.read().decode("utf-8") if exc.fp else str(exc)
+        logger.error("Token refresh failed: %s", body)
+        raise GoogleAuthError(body) from exc
+    except (URLError, TimeoutError, json.JSONDecodeError) as exc:
+        logger.error("Token refresh error: %s", exc)
+        raise GoogleAuthError(str(exc)) from exc
+
+
 def revoke_access_token(access_token):
     data = urlencode({"token": access_token}).encode("utf-8")
     req = Request(GOOGLE_REVOKE_URI, data=data, method="POST")

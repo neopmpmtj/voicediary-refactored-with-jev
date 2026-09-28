@@ -108,7 +108,10 @@ Every `test_*` is marked `unit` or `integration` (see [`pytest.ini`](pytest.ini)
 .venv/bin/pytest -q
 .venv/bin/pytest -m unit
 .venv/bin/pytest -m integration
+.venv/bin/pytest --create-db
 ```
+
+`pytest.ini` passes `--reuse-db` (Django `--keepdb`) so the test database is kept between runs. Use `--create-db` after a migration that will not apply on top of the old schema.
 
 ## Production
 

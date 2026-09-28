@@ -34,7 +34,7 @@ Sync **living documents** at end of session so the next chat can start from `doc
 
 - Scan conversation for completed work, decisions, and explicit "next" task
 - Run `git status` and `git diff` (or review unstaged changes)
-- Run tests if the project has them: `pytest` or `.venv/bin/python manage.py test`
+- Run tests: `.venv/bin/pytest -q` (`--reuse-db` is already in [`pytest.ini`](pytest.ini)). Recreate a stale schema with `--create-db`.
 
 ### 2. Update living documents
 

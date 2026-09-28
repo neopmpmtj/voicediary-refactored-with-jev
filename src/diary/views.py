@@ -65,6 +65,14 @@ def text_page(request):
                 "error": "Saved the text. Classification failed.",
                 "text": entry.content_text,
             })
+        for booking in entry.calendar_bookings.all():
+            line = f"{booking.summary or 'calendar'} {booking.status}"
+            if booking.problem:
+                line += f": {booking.problem}"
+            if booking.status == "inserted":
+                messages.success(request, line)
+            else:
+                messages.warning(request, line)
         return redirect("diary:list")
     return render(request, "diary/text.html")
 

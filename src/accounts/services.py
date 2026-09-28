@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 from src.accounts.crypto import decrypt_value, encrypt_value
-from src.accounts.google import revoke_access_token
+from src.accounts.google import GoogleAuthError, refresh_access_token, revoke_access_token
 from src.accounts.models import User, UserSecret
 
 logger = logging.getLogger(__name__)
@@ -40,6 +40,40 @@ def create_google_user(user_info):
     user.is_google_account = True
     user.save()
     return user
+
+
+def google_access_token(user):
+    secret = UserSecret.objects.filter(user=user).first()
+    if not secret or not secret.encrypted_google_access_token:
+        raise GoogleAuthError("Google account is not linked")
+    access_token = decrypt_value(secret.encrypted_google_access_token)
+    expiry_raw = decrypt_value(secret.encrypted_google_token_expiry)
+    expired = True
+    if expiry_raw:
+        try:
+            expiry = datetime.fromisoformat(expiry_raw)
+            if expiry.tzinfo is None:
+                expiry = expiry.replace(tzinfo=timezone.utc)
+            expired = datetime.now(timezone.utc) >= expiry - timedelta(seconds=60)
+        except ValueError:
+            expired = True
+    if access_token and not expired:
+        return access_token
+    refresh_token = decrypt_value(secret.encrypted_google_refresh_token)
+    if not refresh_token:
+        raise GoogleAuthError("Google access token expired")
+    tokens = refresh_access_token(refresh_token)
+    new_access = tokens.get("access_token")
+    if not new_access:
+        raise GoogleAuthError("Google token refresh returned no access token")
+    store_user_tokens(
+        user,
+        new_access,
+        tokens.get("refresh_token") or refresh_token,
+        tokens.get("expires_in"),
+        secret.get_scopes_list(),
+    )
+    return new_access
 
 
 def revoke_user_tokens(user):

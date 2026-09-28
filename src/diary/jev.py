@@ -28,6 +28,10 @@ QUESTIONS = {
             "diary": "a personal diary note",
             "finance": "money spent, received, owed, or paid",
             "appointment": "a meeting, booking, or visit at a place and time",
+            "calendar": (
+                "one or more bookings for the calendar, including several times "
+                "in the same utterance"
+            ),
         },
     },
     "user_asked_for_diary": {

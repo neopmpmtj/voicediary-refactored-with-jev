@@ -3,6 +3,7 @@
 - [x] Phase one — input and classify
 - [x] File attachments (local, timestamped, optional link to an input)
 - [x] URL and endpoint capture (JEV `reference` choice; `src.urls_others` rows)
+- [x] Batch calendar (JEV `calendar` subject; extract + insert; taken slot reported)
 - [x] Text rewrite (CLI + in-memory `rewrite_text`; six styles; Responses API)
 - [x] Conference rewrite (CLI + in-memory `rewrite_text`; headings; Responses API)
 - [ ] Conferencing
@@ -15,20 +16,26 @@
 
 A Google-authenticated user records or types an entry. Voice keeps the current input behavior: swipe between voice and text, pause and resume, microphone interruption, one merged recording, IndexedDB recovery, and automatic restart at `RECORDER_MAX_DURATION` (default 240 seconds). Audio is trimmed, silence is removed, and OpenAI transcribes it in the original language. Durations stored are the original length and the length after silence removal, in seconds. File sizes are not stored.
 
-Jev classifies each entry in one call: intent (freeform, list, follow-up, todo, reschedule), subject (diary, finance, appointment), and two yes/no checks (the user asked for the diary, and this continues the prior entries). Prior entries are included only after two rows exist. The count defaults to 2 (`PRIOR_ENTRY_COUNT`). A prior recording is included only when its duration is known and shorter than `RECORDER_MAX_DURATION`. A missing duration stays out.
+Jev classifies each entry in one call: intent (freeform, list, follow-up, todo, reschedule), subject (diary, finance, appointment, calendar), and two yes/no checks (the user asked for the diary, and this continues the prior entries). Prior entries are included only after two rows exist. The count defaults to 2 (`PRIOR_ENTRY_COUNT`). A prior recording is included only when its duration is known and shorter than `RECORDER_MAX_DURATION`. A missing duration stays out.
 
 Decided, not built yet:
 
 - Prior context starts when one older row exists. The cap stays `PRIOR_ENTRY_COUNT`.
 - A file-only upload is not a prior utterance. Attachment filenames on a voice or text entry are their own field. The utterance text stays the transcript or the typed note.
 
-If the intent is follow-up or reschedule, or the subject is appointment, the stored route is calendar. That wins even when the user asked for the diary. The diary answer is still stored.
+If the intent is follow-up or reschedule, or the subject is appointment or calendar, the stored route is calendar. That wins even when the user asked for the diary. The diary answer is still stored. A calendar route then extracts one or more events and inserts free slots; see [Batch calendar](#batch-calendar).
 
 Usage is logged. Transcription is stored as audio minutes, because the transcription response has no token count. Jev input and output tokens are stored. There is no quota gate and no Stripe charge.
 
 ## URL and endpoint capture
 
 Jev's diary call includes a `reference` choice: `url`, `endpoint`, or `none`. The diary entry still stores the raw typed text or transcript. When the choice is `url` or `endpoint`, a regex script in `src.urls_others` writes one row per parsed address into its own table. `http(s)` addresses are `url` (including an API-looking host). `GET /v1/users` and paths starting with `/api/` or `/vN/` are `endpoint`. Leftover text is the row's note. A leftover note currently calls `start_process`, which logs a reminder; the LLM start-process call is later. Classification failure or `none` writes no reference rows. Fetching descriptions is later work; rows start as `pending`. CLI: `url_list --email` (`--json`).
+
+## Batch calendar
+
+A standalone app (`src.batchcalendar`). After JEV stores `route=calendar`, `book_calendar_events` extracts every booking implied by the utterance (OpenAI Chat Completions, timezone `Europe/Lisbon`) and tries Google Calendar `primary`.
+
+Each proposed event is checked with FreeBusy first. A free slot is inserted. A taken slot is not inserted; the booking row stores status `taken` and the busy window. A FreeBusy or auth failure stores `failed` and continues with the next event. No alternative times, confirm UI, or override. Extractor tokens are logged on the diary `UsageLog`. CLI: `calendar_list --email` (`--entry`, `--json`).
 
 ## Text rewrite
 
@@ -125,8 +132,8 @@ Phase three takes some of the items below, not all of them. Which ones is decide
 - Quotas
 - Stripe
 - Taxonomy verifier
-- List, todo, finance, and calendar records
-- Venue, day, and time extraction
+- List, todo, and finance records
+- Venue, day, and time extraction (calendar events already extract start and end)
 - Context, time, and governance taxonomy dimensions
 - Celery, Redis, and pipeline WebSockets
-- Gmail, Drive, and Calendar API calls (full OAuth scopes are requested in phase one)
+- Gmail and Drive API calls (full OAuth scopes are requested in phase one; Calendar insert is in `src.batchcalendar`)

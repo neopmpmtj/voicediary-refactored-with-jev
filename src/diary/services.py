@@ -30,6 +30,7 @@ from src.diary.transcription import TranscriptionError, transcribe_audio
 logger = logging.getLogger(__name__)
 
 CALENDAR_INTENTS = {"follow-up", "reschedule"}
+CALENDAR_SUBJECTS = {"appointment", "calendar"}
 NOUL_YES = 0.5
 
 
@@ -54,7 +55,7 @@ def prior_entry_count():
 
 
 def derive_route(intent, subject):
-    if intent in CALENDAR_INTENTS or subject == "appointment":
+    if intent in CALENDAR_INTENTS or subject in CALENDAR_SUBJECTS:
         return "calendar"
     return subject or ""
 
@@ -147,6 +148,14 @@ def _record_references_if_needed(entry):
     record_references(entry.user, entry, entry.content_text)
 
 
+def _book_calendar_if_needed(entry):
+    if entry.route != "calendar":
+        return
+    from src.batchcalendar.services import book_calendar_events
+
+    book_calendar_events(entry.user, entry)
+
+
 def _attachment_payload(entry):
     return [
         {
@@ -156,6 +165,12 @@ def _attachment_payload(entry):
         }
         for item in entry.attachments.filter(is_deleted=False)
     ]
+
+
+def _booking_payload(entry):
+    from src.batchcalendar.services import bookings_for_entry
+
+    return bookings_for_entry(entry)
 
 
 def entry_payload(entry):
@@ -169,6 +184,7 @@ def entry_payload(entry):
         "classification_error": entry.classification_error,
         "attachments": _attachment_payload(entry),
         "attachment_count": entry.attachments.filter(is_deleted=False).count(),
+        "bookings": _booking_payload(entry),
     }
 
 
@@ -231,6 +247,7 @@ def ingest_text(user, text, uploads=None):
     try:
         _apply_classification(entry, _classify(user, cleaned, exclude_id=entry.id))
         _record_references_if_needed(entry)
+        _book_calendar_if_needed(entry)
     except JevError as exc:
         logger.error("Classification failed for %s: %s", entry.id, exc)
         entry.classification_error = str(exc)
@@ -291,6 +308,7 @@ def ingest_audio(user, upload, recording_duration_seconds=None, recording_group_
     try:
         _apply_classification(entry, _classify(user, text, exclude_id=entry.id))
         _record_references_if_needed(entry)
+        _book_calendar_if_needed(entry)
     except JevError as exc:
         logger.error("Classification failed for %s: %s", entry.id, exc)
         entry.classification_error = str(exc)
@@ -308,7 +326,7 @@ def list_entries(user):
     """
     rows = (
         Entry.objects.filter(user=user, is_deleted=False)
-        .prefetch_related("attachments")
+        .prefetch_related("attachments", "calendar_bookings")
         .order_by("-created_at")
     )
     visible = []

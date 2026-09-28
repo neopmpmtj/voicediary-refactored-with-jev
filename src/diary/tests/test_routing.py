@@ -50,6 +50,11 @@ def test_calendar_route_wins_for_reschedule():
     assert derive_route("reschedule", "finance") == "calendar"
 
 
+def test_calendar_subject_routes_to_calendar():
+    assert derive_route("freeform", "calendar") == "calendar"
+    assert derive_route("list", "calendar") == "calendar"
+
+
 def test_other_subjects_keep_their_own_route():
     assert derive_route("freeform", "diary") == "diary"
     assert derive_route("list", "finance") == "finance"
