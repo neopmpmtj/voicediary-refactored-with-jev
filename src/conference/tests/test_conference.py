@@ -3,8 +3,8 @@ from unittest.mock import patch
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from src.conference.models import ConferenceStatus
-from src.conference.services import ingest_segment, start_conference
+from src.conference.models import ConferenceStatus, Segment
+from src.conference.services import close_conference, ingest_segment, start_conference
 from src.diary.models import Entry
 
 pytestmark = [pytest.mark.unit, pytest.mark.django_db]
@@ -69,3 +69,26 @@ def test_late_segment_keeps_sequence_order(user, settings, tmp_path):
         )
     assert finished.content_text == "first\n\nsecond"
     assert list(finished.segments.order_by("sequence").values_list("sequence", flat=True)) == [1, 2]
+
+
+def test_close_conference_omits_soft_deleted_segments(user):
+    conference = start_conference(user)
+    Segment.objects.create(
+        conference=conference,
+        sequence=1,
+        content_text="keep",
+        recording_duration_seconds=10,
+        relative_path="conferences/x/0001.webm",
+    )
+    Segment.objects.create(
+        conference=conference,
+        sequence=2,
+        content_text="drop",
+        recording_duration_seconds=20,
+        relative_path="conferences/x/0002.webm",
+        is_deleted=True,
+    )
+    closed = close_conference(user, conference.id)
+    assert closed.content_text == "keep"
+    assert closed.total_duration_seconds == 10
+    assert closed.segments.filter(is_deleted=False).count() == 1

@@ -17,6 +17,9 @@
   }
 
   document.querySelectorAll(".entry-copy-btn").forEach(function (btn) {
+    var label = btn.textContent;
+    var ariaLabel = btn.getAttribute("aria-label") || label;
+    var resetTimer = null;
     btn.addEventListener("click", function () {
       var card = cardFor(btn);
       if (!card) {
@@ -28,13 +31,16 @@
         return;
       }
       navigator.clipboard.writeText(text).then(function () {
-        var label = btn.textContent;
         var copied = btn.getAttribute("data-copied") || "Copied";
         btn.textContent = copied;
         btn.setAttribute("aria-label", copied);
-        setTimeout(function () {
+        if (resetTimer) {
+          clearTimeout(resetTimer);
+        }
+        resetTimer = setTimeout(function () {
           btn.textContent = label;
-          btn.setAttribute("aria-label", label);
+          btn.setAttribute("aria-label", ariaLabel);
+          resetTimer = null;
         }, 2000);
       });
     });

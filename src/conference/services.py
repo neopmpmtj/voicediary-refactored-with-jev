@@ -37,7 +37,7 @@ def conference_for_user(user, conference_id):
 
 
 def refresh_conference(conference):
-    segments = list(conference.segments.order_by("sequence"))
+    segments = list(conference.segments.filter(is_deleted=False).order_by("sequence"))
     texts = [(item.content_text or "").strip() for item in segments]
     conference.content_text = "\n\n".join(text for text in texts if text)
     durations = [item.recording_duration_seconds for item in segments if item.recording_duration_seconds is not None]
