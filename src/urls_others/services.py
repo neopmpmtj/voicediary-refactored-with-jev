@@ -16,6 +16,7 @@ class ReferenceLookupError(Exception):
 
 def start_process(user, entry, note, references):
     """Stub: leftover note on a URL or endpoint. Replace with the LLM start-process call."""
+    print("what do you want me to do")
     logger.info("what do you want me to do")
 
 
