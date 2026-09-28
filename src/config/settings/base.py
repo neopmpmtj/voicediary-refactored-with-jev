@@ -16,6 +16,7 @@ INSTALLED_APPS = [
     "src.diary",
     "src.conference",
     "src.urls_others",
+    "src.textrewrite",
 ]
 
 MIDDLEWARE = [
