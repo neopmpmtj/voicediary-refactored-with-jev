@@ -156,6 +156,14 @@ def _book_calendar_if_needed(entry):
     book_calendar_events(entry.user, entry)
 
 
+def _extract_finance_if_needed(entry):
+    if entry.route != "finance":
+        return
+    from src.finance.services import extract_financial_items
+
+    extract_financial_items(entry.user, entry)
+
+
 def _attachment_payload(entry):
     return [
         {
@@ -173,6 +181,12 @@ def _booking_payload(entry):
     return bookings_for_entry(entry)
 
 
+def _finance_payload(entry):
+    from src.finance.services import records_for_entry
+
+    return records_for_entry(entry)
+
+
 def entry_payload(entry):
     return {
         "item_id": str(entry.id),
@@ -185,6 +199,7 @@ def entry_payload(entry):
         "attachments": _attachment_payload(entry),
         "attachment_count": entry.attachments.filter(is_deleted=False).count(),
         "bookings": _booking_payload(entry),
+        "finance": _finance_payload(entry),
     }
 
 
@@ -248,6 +263,7 @@ def ingest_text(user, text, uploads=None):
         _apply_classification(entry, _classify(user, cleaned, exclude_id=entry.id))
         _record_references_if_needed(entry)
         _book_calendar_if_needed(entry)
+        _extract_finance_if_needed(entry)
     except JevError as exc:
         logger.error("Classification failed for %s: %s", entry.id, exc)
         entry.classification_error = str(exc)
@@ -309,6 +325,7 @@ def ingest_audio(user, upload, recording_duration_seconds=None, recording_group_
         _apply_classification(entry, _classify(user, text, exclude_id=entry.id))
         _record_references_if_needed(entry)
         _book_calendar_if_needed(entry)
+        _extract_finance_if_needed(entry)
     except JevError as exc:
         logger.error("Classification failed for %s: %s", entry.id, exc)
         entry.classification_error = str(exc)
@@ -326,7 +343,7 @@ def list_entries(user):
     """
     rows = (
         Entry.objects.filter(user=user, is_deleted=False)
-        .prefetch_related("attachments", "calendar_bookings")
+        .prefetch_related("attachments", "calendar_bookings", "finance_records__items")
         .order_by("-created_at")
     )
     visible = []

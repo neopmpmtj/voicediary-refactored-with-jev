@@ -79,6 +79,19 @@
         }
       });
     }
+    if (data.finance && data.finance.length) {
+      data.finance.forEach(function (record) {
+        var part = record.record_name || "finance";
+        line += "\n" + part + " " + record.status;
+        if (record.error_message) {
+          line += ": " + record.error_message;
+        } else if (record.items && record.items.length) {
+          record.items.forEach(function (item) {
+            line += " " + item.type + " " + item.amount + " " + item.currency;
+          });
+        }
+      });
+    }
     if (data.attachment_count) {
       line += "\n" + data.attachment_count + " file(s) attached.";
     }

@@ -36,6 +36,19 @@
         {% endfor %}
       </ul>
       {% endif %}
+      {% if entry.finance_records.all %}
+      <ul class="space-y-1 text-xs text-muted-foreground">
+        {% for record in entry.finance_records.all %}
+        <li>
+          {{ record.record_name|default:"finance" }} · {{ record.status }}
+          {% if record.error_message %} · {{ record.error_message }}{% endif %}
+          {% for item in record.items.all %}
+          · {{ item.type }} {{ item.amount }} {{ item.currency }}
+          {% endfor %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
       {% if entry.present_attachments %}
       <ul class="space-y-1 text-sm">
         {% for file in entry.present_attachments %}

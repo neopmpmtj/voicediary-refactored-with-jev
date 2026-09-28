@@ -104,6 +104,18 @@ Each command is added here when it is created.
 - **Run:** `python manage.py calendar_list --email <email>` (`--entry`, `--json` optional)
 - **Does:** list calendar bookings for that account, newest first. `--entry` subsets to one diary entry. Omits a row whose diary entry is soft-deleted
 
+## finance_list
+
+- **Location:** `src/finance/management/commands/finance_list.py`
+- **Run:** `python manage.py finance_list --email <email>` (`--entry`, `--json` optional)
+- **Does:** list finance records for that account, newest first. `--entry` subsets to one diary entry. Omits a row whose diary entry is soft-deleted. Invoice rows with no diary entry are included
+
+## invoice_parse
+
+- **Location:** `src/invoiceparser/management/commands/invoice_parse.py`
+- **Run:** `python manage.py invoice_parse --email <email>` (`--json` optional)
+- **Does:** search Gmail for PDF invoices, parse each with OpenAI Responses, and store finance records. Labels a message `Facturas/Processadas` after a successful persist
+
 ## rewrite_run
 
 - **Location:** `src/textrewrite/management/commands/rewrite_run.py`

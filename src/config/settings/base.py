@@ -17,6 +17,8 @@ INSTALLED_APPS = [
     "src.conference",
     "src.urls_others",
     "src.batchcalendar",
+    "src.finance",
+    "src.invoiceparser",
     "src.textrewrite",
     "src.conferencerewrite",
 ]

@@ -21,6 +21,8 @@ Do not commit secrets. Sample env and credential files stay reference-only.
 - Entries cards have Delete, Edit, and Copy. Delete soft-deletes the entry and frees attached files. Edit saves `content_text` in a modal. Copy uses the clipboard.
 - URL and endpoint capture: Jev `reference` choice (`url` / `endpoint` / `none`) on the existing diary call. Matching entries also write rows in `src.urls_others`. Regex parse, no second model call.
 - Batch calendar: Jev subject `calendar` (appointment / follow-up / reschedule still route to calendar). `src.batchcalendar` extracts all implied events, inserts free slots on Google Calendar `primary`, and reports a taken slot without resolving it. CLI: `calendar_list`.
+- Finance records: Jev subject `finance`. `src.finance` extracts expenses and income from the utterance. CLI: `finance_list`.
+- Gmail PDF invoices: `src.invoiceparser` searches Gmail for invoice PDFs, parses with OpenAI Responses, and persists through `src.finance`. CLI: `invoice_parse`. Image invoices stay later.
 - Phase two is rewrite. Text rewrite (`src.textrewrite`): `rewrite_text` plus `rewrite_run --style` (`grammar` default, also professional, casual, llm-friendly, story, fairy-tale). Conference rewrite (`src.conferencerewrite`): `rewrite_text` plus `conference_rewrite_run`, with a heading on each grouped idea. OpenAI Responses only. Usage row stores date, model, and tokens. Text rewrite also stores the style. Source and rewrite stay in memory.
 
 **Not done**
@@ -53,5 +55,7 @@ Do not commit secrets. Sample env and credential files stay reference-only.
 - `conference_show <id> --email <email>` (`--json`) — print joined transcript and segments. `src/conference/management/commands/conference_show.py`
 - `url_list --email <email>` (`--kind`, `--limit`, `--json`) — list URL and endpoint rows for that account. Omits rows whose entry is soft-deleted. `src/urls_others/management/commands/url_list.py`
 - `calendar_list --email <email>` (`--entry`, `--json`) — list calendar bookings for that account. Omits rows whose entry is soft-deleted. `src/batchcalendar/management/commands/calendar_list.py`
+- `finance_list --email <email>` (`--entry`, `--json`) — list finance records for that account. Omits rows whose entry is soft-deleted. Invoice rows with no diary entry are included. `src/finance/management/commands/finance_list.py`
+- `invoice_parse --email <email>` (`--json`) — search Gmail for PDF invoices, parse them, and store finance records. `src/invoiceparser/management/commands/invoice_parse.py`
 - `rewrite_run` (`--file`, `--model`, `--style`, `--json`) — rewrite text from a file or stdin. `--style` default `grammar`. Prints the rewritten prose. `src/textrewrite/management/commands/rewrite_run.py`
 - `conference_rewrite_run` (`--file`, `--model`, `--json`) — rewrite conference text from a file or stdin. Prints the rewritten prose with headings. `src/conferencerewrite/management/commands/conference_rewrite_run.py`

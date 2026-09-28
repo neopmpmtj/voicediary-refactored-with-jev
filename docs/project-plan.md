@@ -4,6 +4,8 @@
 - [x] File attachments (local, timestamped, optional link to an input)
 - [x] URL and endpoint capture (JEV `reference` choice; `src.urls_others` rows)
 - [x] Batch calendar (JEV `calendar` subject; extract + insert; taken slot reported)
+- [x] Finance records (JEV `finance` subject; extract amounts from the utterance)
+- [x] Gmail PDF invoices (`src.invoiceparser`; persist into finance records)
 - [x] Text rewrite (CLI + in-memory `rewrite_text`; six styles; Responses API)
 - [x] Conference rewrite (CLI + in-memory `rewrite_text`; headings; Responses API)
 - [ ] Conferencing
@@ -36,6 +38,16 @@ Jev's diary call includes a `reference` choice: `url`, `endpoint`, or `none`. Th
 A standalone app (`src.batchcalendar`). After JEV stores `route=calendar`, `book_calendar_events` extracts every booking implied by the utterance (OpenAI Chat Completions, timezone `Europe/Lisbon`) and tries Google Calendar `primary`.
 
 Each proposed event is checked with FreeBusy first. A free slot is inserted. A taken slot is not inserted; the booking row stores status `taken` and the busy window. A FreeBusy or auth failure stores `failed` and continues with the next event. No alternative times, confirm UI, or override. Extractor tokens are logged on the diary `UsageLog`. CLI: `calendar_list --email` (`--entry`, `--json`).
+
+## Finance records
+
+A standalone app (`src.finance`). After JEV stores `route=finance`, `extract_financial_items` extracts expenses and income from the utterance (OpenAI Chat Completions, timezone `Europe/Lisbon`) and stores a `FinancialRecord` with `FinancialItem` children, linked to the diary entry.
+
+An empty extract writes a `failed` record and leaves the diary entry in place. Tokens go on the diary `UsageLog` with service `finance`. CLI: `finance_list --email` (`--entry`, `--json`). Invoice parses also write these records; see [Gmail PDF invoices](#gmail-pdf-invoices).
+
+## Gmail PDF invoices
+
+A standalone app (`src.invoiceparser`). `invoice_parse --email` searches Gmail for subjects `invoice`, `fatura`, `recibo` (and the usual Portuguese variants), excluding messages labeled `Facturas/Processadas`. PDF attachments go to OpenAI Responses. `persist_parsed_invoice` in `src.finance` writes one record: vendor as the name, payable total as the item, line items on the raw JSON. The same persist function is the later image-invoice door. After a successful persist, the processed label is added so the message is not inserted again (`external_id` is the Gmail message id). No Celery, no admin test page.
 
 ## Text rewrite
 
@@ -132,8 +144,9 @@ Phase three takes some of the items below, not all of them. Which ones is decide
 - Quotas
 - Stripe
 - Taxonomy verifier
-- List, todo, and finance records
+- List and todo records
+- Image invoices (PDF path is in `src.invoiceparser`; persist is in `src.finance`)
 - Venue, day, and time extraction (calendar events already extract start and end)
 - Context, time, and governance taxonomy dimensions
 - Celery, Redis, and pipeline WebSockets
-- Gmail and Drive API calls (full OAuth scopes are requested in phase one; Calendar insert is in `src.batchcalendar`)
+- Drive API calls (full OAuth scopes are requested in phase one; Calendar insert is in `src.batchcalendar`; Gmail PDF invoices are in `src.invoiceparser`)

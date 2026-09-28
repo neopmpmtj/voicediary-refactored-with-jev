@@ -73,6 +73,21 @@ def text_page(request):
                 messages.success(request, line)
             else:
                 messages.warning(request, line)
+        for record in entry.finance_records.all():
+            line = f"{record.record_name or 'finance'} {record.status}"
+            if record.error_message:
+                line += f": {record.error_message}"
+            else:
+                amounts = [
+                    f"{item.type} {item.amount} {item.currency}"
+                    for item in record.items.all()
+                ]
+                if amounts:
+                    line += ": " + ", ".join(amounts)
+            if record.status == "success":
+                messages.success(request, line)
+            else:
+                messages.warning(request, line)
         return redirect("diary:list")
     return render(request, "diary/text.html")
 
