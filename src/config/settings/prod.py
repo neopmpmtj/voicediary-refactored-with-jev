@@ -1,8 +1,15 @@
 from decouple import Csv, config
+from django.core.exceptions import ImproperlyConfigured
 
 from .base import *  # noqa: F403
 
 DEBUG = False
+
+if not config("DATABASE_URL", default=""):
+    raise ImproperlyConfigured(
+        "DATABASE_URL must be set in production (Postgres). "
+        "Set it in the environment or .env."
+    )
 
 SECRET_KEY = config("SECRET_KEY")
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", cast=Csv())
