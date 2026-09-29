@@ -3,8 +3,10 @@ from django.urls import include, path
 from django.views.generic import RedirectView
 
 from src.accounts.views import GoogleCallbackView
+from src.config.views import healthz
 
 urlpatterns = [
+    path("healthz", healthz, name="healthz"),
     path("", RedirectView.as_view(pattern_name="diary:voice")),
     path("admin/", admin.site.urls),
     path("accounts/", include("src.accounts.urls")),
