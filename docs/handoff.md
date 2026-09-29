@@ -1,4 +1,4 @@
-> **Last updated:** 2026-09-28 13:40 WEST (Europe/Lisbon)
+> **Last updated:** 2026-09-29 12:05 WEST (Europe/Lisbon)
 > Replace with the current date and time whenever you edit this file.
 
 # Session handoff
@@ -24,7 +24,7 @@
 ## Not done
 
 - Interface language after the shell: `pt-pt` default, `en` available. Separate from diary-content translation.
-- Conference classification (own question set, after stop). Not the diary taxonomy, and not a length label. It does not wait on the visual shell.
+- Conference classification (own question set, after stop). Not the diary taxonomy, and not a length label. It does not wait on the visual shell. That work switches `decide` in `src/diary/jev.py` to `typesafe-sdk` before a third copy of the hand-built call appears. One shared door serves diary and conference (`Choice`, `Noul`, `Score`). Questions stay next to the feature that owns them.
 - Diary prior-context rules discussed earlier are not changed: priors still wait until two older rows exist, and file-only rows can still appear as prior text.
 - Phase-three backlog: translation, retrieval/chat, GIGO, quotas, Stripe, verifier, list/todo/finance records, extra taxonomy dimensions, Celery/Redis/WebSockets, Gmail/Drive API calls.
 - `GET /service-worker.js` returns 404. The new app does not register a worker.

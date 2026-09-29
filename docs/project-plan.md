@@ -99,6 +99,8 @@ Build order:
 2. [x] Transcribe each segment as it arrives.
 3. [ ] After stop, one classification call. Segment texts stay in order as parts of that conference. The question set is not defined yet.
 
+When that question set is added, switch `decide` in `src/diary/jev.py` to `typesafe-sdk` before a third copy of the hand-built call appears. One shared door serves every app, with `Choice`, `Noul`, and `Score` objects so a new question set cannot drift into a hand-built dict with the wrong shape. The SDK retries rate limits and server errors, which matters once classification sits on more than one path. Diary and conference both call that door. The questions themselves stay next to the feature that owns them.
+
 `recording_group_id` on a diary entry is not the conference model.
 
 Conference classification does not wait on the visual shell. New screens are not designed in the temporary cream layout. They follow [docs/ui-rules.md](ui-rules.md).

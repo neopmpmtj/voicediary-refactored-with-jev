@@ -28,7 +28,7 @@ Do not commit secrets. Sample env and credential files stay reference-only.
 **Not done**
 
 - Interface language (`pt-pt` default, `en`). Interface language is not the backlog item Translation.
-- Conference question set and the single classification call after stop.
+- Conference question set and the single classification call after stop. That work switches `decide` in `src/diary/jev.py` to `typesafe-sdk` before a third copy of the hand-built call appears. One shared door serves diary and conference, with `Choice`, `Noul`, and `Score` objects so a new question set cannot drift into a hand-built dict with the wrong shape. The SDK retries rate limits and server errors. The questions stay next to the feature that owns them.
 - Diary prior context still waits for two older rows. File-only uploads can still be sent as prior text. Both changes are decided and not built. Unknown audio duration stays out of prior context.
 - Phase-three backlog. Service-worker 404 left paused.
 

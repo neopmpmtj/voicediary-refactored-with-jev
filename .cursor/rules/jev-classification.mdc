@@ -1,0 +1,51 @@
+---
+description: When to call Jev, and when that call moves onto typesafe-sdk
+alwaysApply: true
+---
+
+# Jev classification
+
+Closed decisions go to TypeSafe System One (Jev). Open text stays on the general model. One module in the repo is allowed to call `https://api.typesafe.ai/v1/systemone`.
+
+## Which job goes where
+
+Send Jev a fixed menu: `choice` (one label), `noul` (yes/no), `score` (a point on a scale). One POST per input when the questions share that input. Add a question to the existing call. A second request is only for a different input.
+
+Keep the general model for work that must produce new text: transcription, dates and titles, amounts, invoice lines, rewritten prose.
+
+Auth is a TypeSafe console key (`apikey_…`) in `JEV_API_KEY`. Do not use a hosted `jv_live_` key against this endpoint.
+
+## One door, then the SDK
+
+The first classification may be a small hand-built POST.
+
+```python
+body = json.dumps({
+    "model": "jev-latest",
+    "state": state,
+    "questions": questions,
+}).encode("utf-8")
+request = Request(
+    "https://api.typesafe.ai/v1/systemone",
+    data=body,
+    method="POST",
+    headers={
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    },
+)
+```
+
+When a second question set is added, switch that one function to `typesafe-sdk` before a third copy appears. Every feature calls that shared door.
+
+- Questions are `Choice`, `Noul`, and `Score` objects, so a new set cannot drift into a hand-built dict with the wrong shape.
+- The questions stay next to the feature that owns them. The door only sends them.
+- The SDK retries rate limits and server errors. That matters once classification sits on more than one path.
+
+```python
+# feature module owns the questions
+intent = Choice(instructions="...", criteria={"freeform": "...", "todo": "..."})
+
+# the single door sends them
+decide(state, questions)
+```
