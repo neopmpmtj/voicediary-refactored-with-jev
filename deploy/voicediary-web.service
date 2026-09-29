@@ -1,0 +1,22 @@
+[Unit]
+Description=Voicediary (JEV) Gunicorn WSGI Server
+After=network.target
+
+[Service]
+User=pmpmt
+Group=pmpmt
+WorkingDirectory=/home/pmpmt/app/voicediary_jev
+EnvironmentFile=/home/pmpmt/app/voicediary_jev/.env
+ExecStart=/home/pmpmt/app/voicediary_jev/.venv/bin/gunicorn src.config.wsgi:application \
+    --bind 127.0.0.1:8001 \
+    --workers 3 \
+    --timeout 300 \
+    --access-logfile /home/pmpmt/app/voicediary_jev/logs/access.log \
+    --error-logfile /home/pmpmt/app/voicediary_jev/logs/error.log
+Restart=always
+RestartSec=5
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
+[Install]
+WantedBy=multi-user.target
