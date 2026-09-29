@@ -3,7 +3,11 @@ django-tailwind-cli==4.8.1
 python-decouple==3.8
 cryptography==50.0.1
 openai==3.19.2
+gunicorn==23.0.0
+psycopg[binary]==3.2.3
 pytest==9.1.1
 pytest-django==4.14.0
 # python-decouple: config from .env; import as "from decouple import config".
 # Do not install the "decouple" package — it is a different library.
+# psycopg is the Postgres driver (used when DATABASE_URL is set).
+# gunicorn is the production WSGI server.

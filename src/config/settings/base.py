@@ -1,6 +1,9 @@
 """Shared Django settings. DEBUG, secrets, and TLS flags live in dev.py and prod.py."""
 
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
+
+from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 
@@ -57,17 +60,39 @@ LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "diary:voice"
 
 MEDIA_ROOT = BASE_DIR / "media"
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+def _database_config():
+    """Use Postgres when DATABASE_URL is set, SQLite otherwise (local dev and tests).
+
+    Production sets DATABASE_URL (see prod.py). Local dev and the test suite keep
+    the zero-setup SQLite file so nothing changes for day-to-day work.
+    """
+    url = config("DATABASE_URL", default="")
+    if not url:
+        return {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    parsed = urlsplit(url)
+    if parsed.scheme not in ("postgres", "postgresql"):
+        raise ValueError(f"Unsupported DATABASE_URL scheme: {parsed.scheme!r}")
+    return {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": unquote(parsed.path.lstrip("/")),
+        "USER": unquote(parsed.username or ""),
+        "PASSWORD": unquote(parsed.password or ""),
+        "HOST": parsed.hostname or "",
+        "PORT": str(parsed.port or ""),
+        "CONN_MAX_AGE": 60,
+        "CONN_HEALTH_CHECKS": True,
     }
-}
+
+
+DATABASES = {"default": _database_config()}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -81,7 +106,7 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "src" / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
